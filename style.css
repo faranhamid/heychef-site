@@ -144,6 +144,83 @@ body::before {
 .user-email {
     color: #6b7280;
     font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.user-email:hover {
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+.user-email i {
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+}
+
+.user-dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px var(--shadow-lg);
+    border: 1px solid var(--border);
+    min-width: 200px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+}
+
+.dropdown-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border-bottom: 1px solid var(--border);
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background-color: #f8fafc;
+}
+
+.dropdown-item i {
+    width: 16px;
+    color: var(--text-light);
+}
+
+.dropdown-item span {
+    font-weight: 500;
+    color: var(--text);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: var(--border);
+    margin: 0.5rem 0;
 }
 
 .cta-button, .login-btn, .logout-btn {
@@ -874,12 +951,9 @@ input:focus {
     font-weight: 900;
 }
 
-.tips-image {
-    width: 100%;
-    height: auto;
-    border-radius: 12px;
-    box-shadow: 0 4px 8px var(--shadow);
-}
+
+
+
 
 .results-section .results-intro {
     text-align: center;
