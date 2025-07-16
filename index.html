@@ -485,14 +485,7 @@
                                 <span class="user-email">${user.email}</span>
                                 <button class="cta-button logout-btn" onclick="signOutUser()">Sign Out</button>
                             `;
-                            recipeSection.style.display = 'block';
-                            homeSection.style.display = 'none';
-                            featuresSection.style.display = 'none';
-                            howItWorksSection.style.display = 'none';
-                            subscriptionSection.style.display = 'none';
-                            testimonialsSection.style.display = 'none';
-                            affiliateSection.style.display = 'none';
-                            faqSection.style.display = 'none';
+                            showRecipeGenerator();
                             
                             // Show welcome message for subscribed users
                             showWelcomeMessage(user.email);
@@ -659,26 +652,57 @@
                 
                 console.log('Subscription status updated successfully');
                 
-                // Show success message
+                // Show success message and redirect to recipe generator
                 const modalText = document.getElementById('modal-text');
                 modalText.innerHTML = `
                     <div style="text-align: center; padding: 2rem;">
                         <h2 style="color: var(--accent); margin-bottom: 1rem;">🎉 Payment Successful!</h2>
                         <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">Your subscription is now active!</p>
-                        <p style="color: var(--text-light);">You now have unlimited access to our AI-powered recipe generator.</p>
+                        <p style="color: var(--text-light); margin-bottom: 2rem;">Redirecting you to the recipe generator...</p>
+                        <div style="display: flex; justify-content: center;">
+                            <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        </div>
                     </div>
                 `;
                 document.getElementById('modal').style.display = 'flex';
                 
-                // Refresh the page to show recipe generator
+                // Redirect to recipe generator after 3 seconds
                 setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
+                    showRecipeGenerator();
+                }, 3000);
                 
             } catch (error) {
                 console.error('Error updating subscription status:', error);
                 alert('Payment successful, but there was an issue updating your account. Please contact support.');
             }
+        }
+
+        // Function to show recipe generator
+        function showRecipeGenerator() {
+            const recipeSection = document.getElementById('recipe-section');
+            const homeSection = document.getElementById('home');
+            const featuresSection = document.getElementById('features');
+            const howItWorksSection = document.getElementById('how-it-works');
+            const subscriptionSection = document.getElementById('subscriptions');
+            const testimonialsSection = document.getElementById('testimonials');
+            const affiliateSection = document.getElementById('affiliate');
+            const faqSection = document.getElementById('faq');
+
+            // Hide all sections except recipe generator
+            recipeSection.style.display = 'block';
+            homeSection.style.display = 'none';
+            featuresSection.style.display = 'none';
+            howItWorksSection.style.display = 'none';
+            subscriptionSection.style.display = 'none';
+            testimonialsSection.style.display = 'none';
+            affiliateSection.style.display = 'none';
+            faqSection.style.display = 'none';
+
+            // Close modal
+            document.getElementById('modal').style.display = 'none';
+
+            // Scroll to recipe generator
+            recipeSection.scrollIntoView({ behavior: 'smooth' });
         }
 
         // Recipe Generation (enhanced with better display)
@@ -864,7 +888,19 @@
                         await new Promise(resolve => setTimeout(resolve, 1000));
                     }
                     if (user) {
-                        // Redirect to Stripe checkout for monthly plan
+                        // Check if user is already subscribed
+                        try {
+                            const subscribed = await isSubscribed(user);
+                            if (subscribed) {
+                                // User is already subscribed - redirect to recipe generator
+                                showRecipeGenerator();
+                                return;
+                            }
+                        } catch (error) {
+                            console.error('Error checking subscription:', error);
+                        }
+                        
+                        // User is not subscribed - redirect to Stripe checkout for monthly plan
                         const stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid;
                         console.log('Redirecting to Stripe:', stripeUrl);
                         window.location.href = stripeUrl;
@@ -885,7 +921,19 @@
                         await new Promise(resolve => setTimeout(resolve, 1000));
                     }
                     if (user) {
-                        // Redirect to Stripe checkout for annual plan
+                        // Check if user is already subscribed
+                        try {
+                            const subscribed = await isSubscribed(user);
+                            if (subscribed) {
+                                // User is already subscribed - redirect to recipe generator
+                                showRecipeGenerator();
+                                return;
+                            }
+                        } catch (error) {
+                            console.error('Error checking subscription:', error);
+                        }
+                        
+                        // User is not subscribed - redirect to Stripe checkout for annual plan
                         const stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid;
                         console.log('Redirecting to Stripe:', stripeUrl);
                         window.location.href = stripeUrl;
