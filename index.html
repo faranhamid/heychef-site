@@ -345,6 +345,10 @@
             appId: "1:807625257042:web:9cee7a67d15c940239af8b",
             measurementId: "G-JN8NT9C3M7"
         };
+        
+        // Debug: Log current domain for Firebase troubleshooting
+        console.log('Current domain:', window.location.hostname);
+        console.log('Current URL:', window.location.href);
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, signInWithPopup, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -551,6 +555,8 @@
         window.signInWithGoogle = async function() {
             try {
                 console.log('Starting Google sign-in...');
+                console.log('Current domain:', window.location.hostname);
+                
                 const provider = new GoogleAuthProvider();
                 provider.addScope('email');
                 provider.addScope('profile');
@@ -564,14 +570,23 @@
                 
                 // Try popup first, fallback to redirect
                 try {
+                    console.log('Attempting popup sign-in...');
                     const result = await signInWithPopup(auth, provider);
                     console.log('Sign-in successful via popup:', result.user.email);
                 } catch (popupError) {
                     console.log('Popup failed, trying redirect:', popupError);
+                    console.log('Popup error code:', popupError.code);
+                    
+                    if (popupError.code === 'auth/unauthorized-domain') {
+                        alert('Domain not authorized in Firebase. Please add ' + window.location.hostname + ' to Firebase console.');
+                        return;
+                    }
+                    
                     await signInWithRedirect(auth, provider);
                 }
             } catch (error) {
                 console.error('Sign-in error:', error);
+                console.error('Error code:', error.code);
                 
                 // Reset button state
                 const loginBtn = document.querySelector('.login-btn');
@@ -586,9 +601,11 @@
                 } else if (error.code === 'auth/popup-blocked') {
                     alert('Popup blocked by browser. Please allow popups for this site.');
                 } else if (error.code === 'auth/unauthorized-domain') {
-                    alert('This domain is not authorized. Please check Firebase console settings.');
+                    alert('Domain not authorized in Firebase. Please add ' + window.location.hostname + ' to Firebase console.');
+                } else if (error.code === 'auth/network-request-failed') {
+                    alert('Network error. Please check your internet connection.');
                 } else {
-                    alert('Sign-in failed: ' + error.message);
+                    alert('Sign-in failed: ' + error.message + ' (Code: ' + error.code + ')');
                 }
             }
         };
@@ -848,7 +865,9 @@
                     }
                     if (user) {
                         // Redirect to Stripe checkout for monthly plan
-                        window.location.href = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email);
+                        const stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid;
+                        console.log('Redirecting to Stripe:', stripeUrl);
+                        window.location.href = stripeUrl;
                     }
                 });
             }
@@ -867,7 +886,9 @@
                     }
                     if (user) {
                         // Redirect to Stripe checkout for annual plan
-                        window.location.href = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email);
+                        const stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid;
+                        console.log('Redirecting to Stripe:', stripeUrl);
+                        window.location.href = stripeUrl;
                     }
                 });
             }
