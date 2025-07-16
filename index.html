@@ -1250,62 +1250,6 @@
 
         // Additional JS for interactivity
         document.addEventListener('DOMContentLoaded', () => {
-            // Debug: Add diagnostic button
-            const debugBtn = document.createElement('button');
-            debugBtn.textContent = 'Debug Firebase';
-            debugBtn.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; background: red; color: white; padding: 5px; border: none; border-radius: 3px; cursor: pointer;';
-            debugBtn.onclick = () => {
-                console.log('=== FIREBASE DEBUG INFO ===');
-                console.log('Current user:', auth.currentUser);
-                console.log('Auth state:', auth);
-                console.log('Firebase config:', firebaseConfig);
-                console.log('Current domain:', window.location.hostname);
-                console.log('User agent:', navigator.userAgent);
-                console.log('Online status:', navigator.onLine);
-                console.log('Network type:', navigator.connection ? navigator.connection.effectiveType : 'unknown');
-                
-                // Test Firebase connection
-                const testDoc = doc(db, 'test', 'connection');
-                getDoc(testDoc).then(() => {
-                    console.log('✅ Firebase connection: SUCCESS');
-                }).catch((error) => {
-                    console.log('❌ Firebase connection: FAILED', error);
-                });
-                
-                alert('Check console for debug info');
-            };
-            document.body.appendChild(debugBtn);
-            
-            // Add online/offline indicator
-            const statusIndicator = document.createElement('div');
-            statusIndicator.id = 'connection-status';
-            statusIndicator.style.cssText = 'position: fixed; top: 40px; right: 10px; z-index: 9999; padding: 5px; border-radius: 3px; font-size: 12px; color: white;';
-            statusIndicator.textContent = navigator.onLine ? '🟢 Online' : '🔴 Offline';
-            document.body.appendChild(statusIndicator);
-            
-            // Add test sign-in button
-            const testSignInBtn = document.createElement('button');
-            testSignInBtn.textContent = 'Test Sign In';
-            testSignInBtn.style.cssText = 'position: fixed; top: 70px; right: 10px; z-index: 9999; background: blue; color: white; padding: 5px; border: none; border-radius: 3px; cursor: pointer; font-size: 12px;';
-            testSignInBtn.onclick = () => {
-                console.log('=== TESTING GOOGLE SIGN IN ===');
-                console.log('Current domain:', window.location.hostname);
-                console.log('Firebase config:', firebaseConfig);
-                console.log('Auth state:', auth);
-                signInWithGoogle();
-            };
-            document.body.appendChild(testSignInBtn);
-            
-            // Update status when connection changes
-            window.addEventListener('online', () => {
-                statusIndicator.textContent = '🟢 Online';
-                statusIndicator.style.background = 'green';
-            });
-            
-            window.addEventListener('offline', () => {
-                statusIndicator.textContent = '🔴 Offline';
-                statusIndicator.style.background = 'red';
-            });
             // Mobile menu toggle
             const toggle = document.getElementById('mobile-menu-toggle');
             const menu = document.getElementById('mobile-nav');
