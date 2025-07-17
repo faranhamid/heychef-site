@@ -131,8 +131,25 @@ app.post('/api/subscription-status', async (req, res) => {
 
         console.log('🔍 Backend: Found paid invoices:', invoices.data.length);
 
-        // Only consider subscribed if theres a paid invoice
-        const paymentConfirmed = invoices.data.length > 0;
+        // For trial subscriptions, check if they have an active subscription
+        // For paid subscriptions, check for paid invoices
+        let paymentConfirmed = false;
+        
+        if (subscription.status === 'active') {
+            if (subscription.trial_end && subscription.trial_end > Math.floor(Date.now() / 1000)) {
+                // User is in trial period - consider them subscribed
+                console.log('🔍 Backend: User is in trial period - granting access');
+                paymentConfirmed = true;
+            } else if (invoices.data.length > 0) {
+                // User has paid invoices - consider them subscribed
+                console.log('🔍 Backend: User has paid invoices - granting access');
+                paymentConfirmed = true;
+            } else {
+                // Check if subscription is active (might be a free trial that converted)
+                console.log('🔍 Backend: Active subscription found - granting access');
+                paymentConfirmed = true;
+            }
+        }
         
         const result = {
             subscribed: paymentConfirmed, // Only true if payment was made

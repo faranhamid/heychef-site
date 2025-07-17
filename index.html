@@ -1074,6 +1074,43 @@
             }
         });
 
+        // AUTOMATIC PAYMENT DETECTION ON PAGE LOAD
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for payment success indicators in URL or session storage
+            const urlParams = new URLSearchParams(window.location.search);
+            const paymentStatus = urlParams.get('payment');
+            const sessionId = urlParams.get('session_id');
+            const paymentIntent = urlParams.get('payment_intent');
+            const customerId = urlParams.get('customer_id');
+            
+            console.log('🔍 PAGE LOAD PAYMENT DETECTION:', {
+                paymentStatus,
+                sessionId,
+                paymentIntent,
+                customerId,
+                referrer: document.referrer,
+                currentUrl: window.location.href
+            });
+            
+            // If we detect payment success, store it for when user signs in
+            if (paymentStatus === 'success' || 
+                sessionId || 
+                paymentIntent || 
+                customerId ||
+                document.referrer.includes('stripe.com') ||
+                window.location.href.includes('stripe.com')) {
+                
+                console.log('🎉 PAYMENT SUCCESS DETECTED ON PAGE LOAD');
+                sessionStorage.setItem('paymentSuccess', 'true');
+                sessionStorage.setItem('paymentTimestamp', Date.now().toString());
+                sessionStorage.setItem('paymentSessionId', sessionId || '');
+                sessionStorage.setItem('paymentIntent', paymentIntent || '');
+                
+                // Clear URL parameters
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+
         // 2. Show locked generator for non-subscribers
         window.showLockedGenerator = function() {
             // Hide the recipe form for unpaid users
