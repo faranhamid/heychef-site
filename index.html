@@ -807,6 +807,12 @@
 
         // 2. Show locked generator for non-subscribers
         window.showLockedGenerator = function() {
+            // Hide the recipe form for unpaid users
+            const recipeFormSection = document.getElementById('recipe-form-section');
+            if (recipeFormSection) {
+                recipeFormSection.style.display = 'none';
+            }
+            
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = `
                 <div class="locked-generator" style="text-align:center; padding:3rem;">
@@ -850,9 +856,14 @@
             const testimonialsSection = document.getElementById('testimonials');
             const affiliateSection = document.getElementById('affiliate');
             const faqSection = document.getElementById('faq');
+            const recipeFormSection = document.getElementById('recipe-form-section');
 
             // Show recipe generator
             recipeSection.style.display = 'block';
+            // Show recipe form for paid users
+            if (recipeFormSection) {
+                recipeFormSection.style.display = 'block';
+            }
             // Hide landing page sections
             homeSection.style.display = 'none';
             featuresSection.style.display = 'none';
@@ -922,6 +933,8 @@
                 alert('Please sign in first.');
                 return;
             }
+            
+            // Check subscription status first
             const subscribed = await isSubscribed(user);
             if (!subscribed) {
                 showUpgradePrompt();
