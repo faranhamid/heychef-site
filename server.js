@@ -79,45 +79,126 @@ app.post('/api/subscription-status', async (req, res) => {
     try {
         const { email } = req.body;
         
+        console.log('🔍 Backend: Checking subscription for email:', email);
+        
         if (!email) {
+            console.log('❌ Backend: No email provided');
             return res.status(400).json({ error: 'Email is required' });
         }
 
         // Find the customer in Stripe by email
+        console.log('🔍 Backend: Searching for Stripe customer...');
         const customers = await stripe.customers.list({
             email: email,
             limit: 1
         });
 
+        console.log('🔍 Backend: Found customers:', customers.data.length);
+
         if (customers.data.length === 0) {
-            return res.json({ subscribed: false });
+            console.log('❌ Backend: No Stripe customer found for email:', email);
+            return res.json({ subscribed: false, paymentConfirmed: false });
         }
 
         const customer = customers.data[0];
+        console.log('🔍 Backend: Found customer ID:', customer.id);
 
         // Get active subscriptions
+        console.log('🔍 Backend: Checking for active subscriptions...');
         const subscriptions = await stripe.subscriptions.list({
             customer: customer.id,
             status: 'active'
         });
 
+        console.log('🔍 Backend: Found active subscriptions:', subscriptions.data.length);
+
         if (subscriptions.data.length === 0) {
-            return res.json({ subscribed: false });
+            console.log('❌ Backend: No active subscriptions found');
+            return res.json({ subscribed: false, paymentConfirmed: false });
         }
 
         const subscription = subscriptions.data[0];
+        console.log('🔍 Backend: Found subscription ID:', subscription.id);
         
-        res.json({
-            subscribed: true,
+        // Check if payment was actually made by looking at invoices
+        console.log('🔍 Backend: Checking for paid invoices...');
+        const invoices = await stripe.invoices.list({
+            customer: customer.id,
+            subscription: subscription.id,
+            status: 'paid',
+            limit: 1
+        });
+
+        console.log('🔍 Backend: Found paid invoices:', invoices.data.length);
+
+        // Only consider subscribed if theres a paid invoice
+        const paymentConfirmed = invoices.data.length > 0;
+        
+        const result = {
+            subscribed: paymentConfirmed, // Only true if payment was made
+            paymentConfirmed: paymentConfirmed,
             subscriptionId: subscription.id,
             status: subscription.status,
             currentPeriodEnd: subscription.current_period_end,
             cancelAtPeriodEnd: subscription.cancel_at_period_end
+        };
+        
+        console.log('🔍 Backend: Final result:', result);
+        res.json(result);
+
+    } catch (error) {
+        console.error('❌ Backend: Error checking subscription status:', error);
+        res.status(500).json({ error: 'Failed to check subscription status' });
+    }
+});
+
+// Payment verification endpoint
+app.post('/api/verify-payment', async (req, res) => {
+    try {
+        const { sessionId } = req.body;
+        
+        if (!sessionId) {
+            return res.status(400).json({ error: 'Session ID is required' });
+        }
+
+        // Retrieve the checkout session from Stripe
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        
+        if (session.payment_status !== 'paid') {
+            return res.json({
+                success: false, 
+                message: 'Payment not completed',
+                paymentStatus: session.payment_status
+            });
+        }
+
+        // Get customer and subscription details
+        const customer = await stripe.customers.retrieve(session.customer);
+        const subscriptions = await stripe.subscriptions.list({
+            customer: session.customer,
+            status: 'active'
+        });
+
+        if (subscriptions.data.length === 0) {
+            return res.json({
+                success: false, 
+                message: 'No active subscription found' 
+            });
+        }
+
+        const subscription = subscriptions.data[0];
+
+        res.json({
+            success: true,
+            message: 'Payment verified successfully',
+            customerEmail: customer.email,
+            subscriptionId: subscription.id,
+            subscriptionStatus: subscription.status
         });
 
     } catch (error) {
-        console.error('Error checking subscription status:', error);
-        res.status(500).json({ error: 'Failed to check subscription status' });
+        console.error('Error verifying payment:', error);
+        res.status(500).json({ error: 'Failed to verify payment' });
     }
 });
 
@@ -150,13 +231,43 @@ app.post('/api/webhook', bodyParser.raw({ type: 'application/json' }), async (re
         case 'invoice.payment_succeeded':
             const invoice = event.data.object;
             console.log('Payment succeeded:', invoice.id);
-            // Handle successful payments
+            
+            // Update user subscription status in Firestore when payment is confirmed
+            if (invoice.subscription) {
+                try {
+                    // Get subscription details
+                    const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+                    
+                    // Get customer details
+                    const customer = await stripe.customers.retrieve(subscription.customer);
+                    
+                    // Update Firestore - you'll need to add Firebase Admin SDK here
+                    // For now, we'll log the details
+                    console.log('Payment confirmed for customer:', customer.email);
+                    console.log('Subscription ID:', subscription.id);
+                    console.log('Invoice ID:', invoice.id);
+                    
+                    // TODO: Add Firebase Admin SDK to update user document
+                    // const userDocRef = admin.firestore().collection('users').doc(userId);
+                    // await userDocRef.set({
+                    //     subscribed: true,
+                    //     paymentConfirmed: true,
+                    //     stripeCustomerId: customer.id,
+                    //     stripeSubscriptionId: subscription.id,
+                    //     lastPaymentDate: new Date(),
+                    //     subscriptionStatus: subscription.status
+                    // }, { merge: true });
+                    
+                } catch (error) {
+                    console.error('Error updating user after payment:', error);
+                }
+            }
             break;
             
         case 'invoice.payment_failed':
             const failedInvoice = event.data.object;
             console.log('Payment failed:', failedInvoice.id);
-            // Handle failed payments
+            // Handle failed payments - mark user as unsubscribed
             break;
             
         default:
