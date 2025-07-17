@@ -1005,7 +1005,8 @@
                         const subscribed = await window.isSubscribed(user);
                         console.log('🔍 Normal subscription check result:', subscribed);
                         updateAccountStatusDisplay(user, subscribed);
-                    if (subscribed) {
+                        
+                        if (subscribed) {
                         showRecipeGenerator();
                         showWelcomeMessage(user.email);
                         // Clear payment success flag if subscription is confirmed
