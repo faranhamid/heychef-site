@@ -813,7 +813,7 @@
         };
 
         // Authentication Logic
-        async function isSubscribed(user) {
+        window.isSubscribed = async function(user) {
             if (!user) {
                 console.log('❌ No user provided to isSubscribed');
                 return false;
@@ -940,7 +940,7 @@
                 console.log('❌ No backend access and no payment success - denying access');
                 return false;
             }
-        }
+        };
 
         // 1. Update the onAuthStateChanged logic to show locked state for non-subscribers
         onAuthStateChanged(auth, async (user) => {
@@ -1851,6 +1851,40 @@
             } catch (error) {
                 console.error('Sign-out error:', error);
                 alert('Sign-out failed. Please try again.');
+            }
+        };
+
+        // Stripe redirect functions
+        window.redirectToStripe = async function(plan) {
+            let user = auth.currentUser;
+            if (!user) {
+                // User not logged in - sign them in first
+                await signInWithGoogle();
+                user = auth.currentUser;
+                // Wait a moment for auth to complete
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            if (user) {
+                const successUrl = window.location.origin + '/?payment=success';
+                const cancelUrl = window.location.origin + '/?payment=cancelled';
+                
+                let stripeUrl;
+                if (plan === 'monthly') {
+                    stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
+                } else if (plan === 'annual') {
+                    stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
+                }
+                
+                console.log('Opening Stripe checkout:', stripeUrl);
+                const popup = window.open(stripeUrl, 'stripe-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
+                
+                // Check if popup was blocked
+                if (!popup || popup.closed || typeof popup.closed == 'undefined') {
+                    alert('Please allow popups for this site to complete your subscription.');
+                    // Fallback to redirect
+                    window.location.href = stripeUrl;
+                }
             }
         };
     </script>
