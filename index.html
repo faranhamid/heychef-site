@@ -1665,43 +1665,60 @@
                 });
             });
 
-            // Subscription buttons
+            // Subscription buttons - SIMPLIFIED AND BULLETPROOF
             const monthlyButton = document.getElementById('monthly-subscribe');
             if (monthlyButton) {
                 monthlyButton.addEventListener('click', async (e) => {
                     e.preventDefault();
-                    let user = auth.currentUser;
-                    if (!user) {
-                        // User not logged in - sign them in first
-                        await signInWithGoogle();
-                        user = auth.currentUser;
-                        // Wait a moment for auth to complete
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                    }
-                    if (user) {
-                        // Check if user is already subscribed
-                        try {
-                            const subscribed = await isSubscribed(user);
-                            if (subscribed) {
-                                // User is already subscribed - redirect to recipe generator
-                                showRecipeGenerator();
-                                return;
+                    console.log('🔄 Monthly subscribe button clicked');
+                    
+                    try {
+                        let user = auth.currentUser;
+                        if (!user) {
+                            console.log('👤 No user logged in, signing in...');
+                            await window.signInWithGoogle();
+                            user = auth.currentUser;
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                        }
+                        
+                        if (user) {
+                            console.log('✅ User authenticated:', user.email);
+                            
+                            // Check subscription status
+                            try {
+                                const subscribed = await window.isSubscribed(user);
+                                if (subscribed) {
+                                    console.log('✅ User already subscribed, showing recipe generator');
+                                    window.showRecipeGenerator();
+                                    return;
+                                }
+                            } catch (error) {
+                                console.error('❌ Error checking subscription:', error);
                             }
-                        } catch (error) {
-                            console.error('Error checking subscription:', error);
+                            
+                            // User not subscribed - open Stripe checkout
+                            console.log('💳 Opening Stripe checkout for monthly plan');
+                            const successUrl = window.location.origin + '/?payment=success';
+                            const cancelUrl = window.location.origin + '/?payment=cancelled';
+                            const stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
+                            
+                            console.log('🔗 Stripe URL:', stripeUrl);
+                            const popup = window.open(stripeUrl, 'stripe-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
+                            
+                            if (!popup || popup.closed || typeof popup.closed == 'undefined') {
+                                console.log('❌ Popup blocked, redirecting');
+                                alert('Please allow popups for this site to complete your subscription.');
+                                window.location.href = stripeUrl;
+                            } else {
+                                console.log('✅ Stripe popup opened successfully');
+                            }
+                        } else {
+                            console.log('❌ Failed to authenticate user');
+                            alert('Please sign in to continue with your subscription.');
                         }
-                        // User is not subscribed - open Stripe checkout in popup for monthly plan
-                        const successUrl = window.location.origin + '/?payment=success';
-                        const cancelUrl = window.location.origin + '/?payment=cancelled';
-                        const stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
-                        console.log('Opening Stripe popup:', stripeUrl);
-                        const popup = window.open(stripeUrl, 'stripe-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
-                        // Check if popup was blocked
-                        if (!popup || popup.closed || typeof popup.closed == 'undefined') {
-                            alert('Please allow popups for this site to complete your subscription.');
-                            // Fallback to redirect
-                            window.location.href = stripeUrl;
-                        }
+                    } catch (error) {
+                        console.error('❌ Error in monthly subscribe:', error);
+                        alert('An error occurred. Please try again.');
                     }
                 });
             }
@@ -1710,38 +1727,55 @@
             if (annualButton) {
                 annualButton.addEventListener('click', async (e) => {
                     e.preventDefault();
-                    let user = auth.currentUser;
-                    if (!user) {
-                        // User not logged in - sign them in first
-                        await signInWithGoogle();
-                        user = auth.currentUser;
-                        // Wait a moment for auth to complete
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                    }
-                    if (user) {
-                        // Check if user is already subscribed
-                        try {
-                            const subscribed = await isSubscribed(user);
-                            if (subscribed) {
-                                // User is already subscribed - redirect to recipe generator
-                                showRecipeGenerator();
-                                return;
+                    console.log('🔄 Annual subscribe button clicked');
+                    
+                    try {
+                        let user = auth.currentUser;
+                        if (!user) {
+                            console.log('👤 No user logged in, signing in...');
+                            await window.signInWithGoogle();
+                            user = auth.currentUser;
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                        }
+                        
+                        if (user) {
+                            console.log('✅ User authenticated:', user.email);
+                            
+                            // Check subscription status
+                            try {
+                                const subscribed = await window.isSubscribed(user);
+                                if (subscribed) {
+                                    console.log('✅ User already subscribed, showing recipe generator');
+                                    window.showRecipeGenerator();
+                                    return;
+                                }
+                            } catch (error) {
+                                console.error('❌ Error checking subscription:', error);
                             }
-                        } catch (error) {
-                            console.error('Error checking subscription:', error);
+                            
+                            // User not subscribed - open Stripe checkout
+                            console.log('💳 Opening Stripe checkout for annual plan');
+                            const successUrl = window.location.origin + '/?payment=success';
+                            const cancelUrl = window.location.origin + '/?payment=cancelled';
+                            const stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
+                            
+                            console.log('🔗 Stripe URL:', stripeUrl);
+                            const popup = window.open(stripeUrl, 'stripe-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
+                            
+                            if (!popup || popup.closed || typeof popup.closed == 'undefined') {
+                                console.log('❌ Popup blocked, redirecting');
+                                alert('Please allow popups for this site to complete your subscription.');
+                                window.location.href = stripeUrl;
+                            } else {
+                                console.log('✅ Stripe popup opened successfully');
+                            }
+                        } else {
+                            console.log('❌ Failed to authenticate user');
+                            alert('Please sign in to continue with your subscription.');
                         }
-                        // User is not subscribed - open Stripe checkout in popup for annual plan
-                        const successUrl = window.location.origin + '/?payment=success';
-                        const cancelUrl = window.location.origin + '/?payment=cancelled';
-                        const stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
-                        console.log('Opening Stripe popup:', stripeUrl);
-                        const popup = window.open(stripeUrl, 'stripe-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
-                        // Check if popup was blocked
-                        if (!popup || popup.closed || typeof popup.closed == 'undefined') {
-                            alert('Please allow popups for this site to complete your subscription.');
-                            // Fallback to redirect
-                            window.location.href = stripeUrl;
-                        }
+                    } catch (error) {
+                        console.error('❌ Error in annual subscribe:', error);
+                        alert('An error occurred. Please try again.');
                     }
                 });
             }
@@ -1751,69 +1785,94 @@
             if (heroCtaButton) {
                 heroCtaButton.addEventListener('click', async (e) => {
                     e.preventDefault();
-                    let user = auth.currentUser;
-                    if (!user) {
-                        // User not logged in - sign them in first
-                        await signInWithGoogle();
-                        user = auth.currentUser;
-                        // Wait a moment for auth to complete
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                    }
-                    if (user) {
-                        // Check if user is already subscribed
-                        try {
-                            const subscribed = await isSubscribed(user);
-                            if (subscribed) {
-                                // User is already subscribed - redirect to recipe generator
-                                showRecipeGenerator();
-                                return;
-                            }
-                        } catch (error) {
-                            console.error('Error checking subscription:', error);
+                    console.log('🔄 Hero CTA button clicked');
+                    
+                    try {
+                        let user = auth.currentUser;
+                        if (!user) {
+                            console.log('👤 No user logged in, signing in...');
+                            await window.signInWithGoogle();
+                            user = auth.currentUser;
+                            await new Promise(resolve => setTimeout(resolve, 2000));
                         }
-                        // User is not subscribed - show subscription options modal
-                        const modalText = document.getElementById('modal-text');
-                        modalText.innerHTML = `
-                            <div style="text-align: center; padding: 2rem;">
-                                <h2 style="color: var(--primary); margin-bottom: 1rem;">🚀 Start Your Culinary Journey</h2>
-                                <p style="font-size: 1.1rem; margin-bottom: 2rem;">Choose your subscription plan to unlock unlimited AI-powered recipes!</p>
-                                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                                    <button class="cta-button" id="modal-monthly-subscribe" style="background: var(--accent);">Monthly Plan - $9.99</button>
-                                    <button class="cta-button" id="modal-annual-subscribe" style="background: var(--primary);">Annual Plan - $99.99</button>
+                        
+                        if (user) {
+                            console.log('✅ User authenticated:', user.email);
+                            
+                            // Check subscription status
+                            try {
+                                const subscribed = await window.isSubscribed(user);
+                                if (subscribed) {
+                                    console.log('✅ User already subscribed, showing recipe generator');
+                                    window.showRecipeGenerator();
+                                    return;
+                                }
+                            } catch (error) {
+                                console.error('❌ Error checking subscription:', error);
+                            }
+                            
+                            // User not subscribed - show subscription options modal
+                            console.log('💳 Showing subscription options modal');
+                            const modalText = document.getElementById('modal-text');
+                            modalText.innerHTML = `
+                                <div style="text-align: center; padding: 2rem;">
+                                    <h2 style="color: var(--primary); margin-bottom: 1rem;">🚀 Start Your Culinary Journey</h2>
+                                    <p style="font-size: 1.1rem; margin-bottom: 2rem;">Choose your subscription plan to unlock unlimited AI-powered recipes!</p>
+                                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                                        <button class="cta-button" id="modal-monthly-subscribe" style="background: var(--accent);">Monthly Plan - $9.99</button>
+                                        <button class="cta-button" id="modal-annual-subscribe" style="background: var(--primary);">Annual Plan - $99.99</button>
+                                    </div>
+                                    <button class="cta-button" onclick="closeModal()" style="background: #6b7280; margin-top: 1rem;">Cancel</button>
                                 </div>
-                                <button class="cta-button" onclick="closeModal()" style="background: #6b7280; margin-top: 1rem;">Cancel</button>
-                            </div>
-                        `;
-                        document.getElementById('modal').style.display = 'flex';
-                        // Add event listeners for modal buttons
-                        setTimeout(() => {
-                            const modalMonthly = document.getElementById('modal-monthly-subscribe');
-                            const modalAnnual = document.getElementById('modal-annual-subscribe');
-                            if (modalMonthly) {
-                                modalMonthly.onclick = () => {
-                                    const successUrl = window.location.origin + '/?payment=success';
-                                    const cancelUrl = window.location.origin + '/?payment=cancelled';
-                                    const stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
-                                    const popup = window.open(stripeUrl, 'stripe-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
-                                    if (!popup || popup.closed || typeof popup.closed == 'undefined') {
-                                        alert('Please allow popups for this site to complete your subscription.');
-                                        window.location.href = stripeUrl;
-                                    }
-                                };
-                            }
-                            if (modalAnnual) {
-                                modalAnnual.onclick = () => {
-                                    const successUrl = window.location.origin + '/?payment=success';
-                                    const cancelUrl = window.location.origin + '/?payment=cancelled';
-                                    const stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
-                                    const popup = window.open(stripeUrl, 'stripe-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
-                                    if (!popup || popup.closed || typeof popup.closed == 'undefined') {
-                                        alert('Please allow popups for this site to complete your subscription.');
-                                        window.location.href = stripeUrl;
-                                    }
-                                };
-                            }
-                        }, 100);
+                            `;
+                            document.getElementById('modal').style.display = 'flex';
+                            
+                            // Add event listeners for modal buttons
+                            setTimeout(() => {
+                                const modalMonthly = document.getElementById('modal-monthly-subscribe');
+                                const modalAnnual = document.getElementById('modal-annual-subscribe');
+                                if (modalMonthly) {
+                                    modalMonthly.onclick = () => {
+                                        console.log('🔄 Modal monthly button clicked');
+                                        const successUrl = window.location.origin + '/?payment=success';
+                                        const cancelUrl = window.location.origin + '/?payment=cancelled';
+                                        const stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
+                                        console.log('🔗 Opening Stripe URL:', stripeUrl);
+                                        const popup = window.open(stripeUrl, 'stripe-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
+                                        if (!popup || popup.closed || typeof popup.closed == 'undefined') {
+                                            console.log('❌ Popup blocked, redirecting');
+                                            alert('Please allow popups for this site to complete your subscription.');
+                                            window.location.href = stripeUrl;
+                                        } else {
+                                            console.log('✅ Stripe popup opened successfully');
+                                        }
+                                    };
+                                }
+                                if (modalAnnual) {
+                                    modalAnnual.onclick = () => {
+                                        console.log('🔄 Modal annual button clicked');
+                                        const successUrl = window.location.origin + '/?payment=success';
+                                        const cancelUrl = window.location.origin + '/?payment=cancelled';
+                                        const stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
+                                        console.log('🔗 Opening Stripe URL:', stripeUrl);
+                                        const popup = window.open(stripeUrl, 'stripe-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
+                                        if (!popup || popup.closed || typeof popup.closed == 'undefined') {
+                                            console.log('❌ Popup blocked, redirecting');
+                                            alert('Please allow popups for this site to complete your subscription.');
+                                            window.location.href = stripeUrl;
+                                        } else {
+                                            console.log('✅ Stripe popup opened successfully');
+                                        }
+                                    };
+                                }
+                            }, 100);
+                        } else {
+                            console.log('❌ Failed to authenticate user');
+                            alert('Please sign in to continue with your subscription.');
+                        }
+                    } catch (error) {
+                        console.error('❌ Error in hero CTA:', error);
+                        alert('An error occurred. Please try again.');
                     }
                 });
             }
