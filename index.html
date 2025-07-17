@@ -1002,7 +1002,7 @@
                         
                     } else {
                         // Normal subscription check
-                        const subscribed = await isSubscribed(user);
+                        const subscribed = await window.isSubscribed(user);
                         console.log('🔍 Normal subscription check result:', subscribed);
                         updateAccountStatusDisplay(user, subscribed);
                     if (subscribed) {
@@ -1207,7 +1207,7 @@
                     </div>
                 `;
                 
-                const subscribed = await isSubscribed(user);
+                const subscribed = await window.isSubscribed(user);
                 console.log('📊 Manual refresh result:', subscribed);
                 
                 if (subscribed) {
@@ -1277,7 +1277,7 @@
             }
             
             // Check subscription status first
-            const subscribed = await isSubscribed(user);
+            const subscribed = await window.isSubscribed(user);
             if (!subscribed) {
                 showUpgradePrompt();
                 return;
@@ -1881,23 +1881,39 @@
         // Authentication Functions
         window.signInWithGoogle = async function() {
             try {
-                console.log('Starting Google sign-in...');
+                console.log('🔄 Starting Google sign-in...');
+                console.log('📍 Current domain:', window.location.hostname);
+                console.log('📍 Current URL:', window.location.href);
+                console.log('📍 Firebase auth domain:', firebaseConfig.authDomain);
+                
                 const provider = new GoogleAuthProvider();
-                console.log('Current domain:', window.location.hostname);
                 
                 // Try popup first, fallback to redirect
                 try {
-                    console.log('Attempting popup sign-in...');
+                    console.log('🔄 Attempting popup sign-in...');
                     const result = await signInWithPopup(auth, provider);
-                    console.log('Sign-in successful via popup:', result.user.email);
+                    console.log('✅ Sign-in successful via popup:', result.user.email);
                     return result.user;
                 } catch (popupError) {
-                    console.log('Popup failed, trying redirect:', popupError.message);
+                    console.log('❌ Popup failed:', popupError.code, popupError.message);
+                    console.log('🔄 Trying redirect sign-in...');
                     await signInWithRedirect(auth, provider);
                 }
             } catch (error) {
-                console.error('Google sign-in error:', error);
-                alert('Sign-in failed. Please try again.');
+                console.error('❌ Google sign-in error:', error);
+                console.error('❌ Error code:', error.code);
+                console.error('❌ Error message:', error.message);
+                
+                // More specific error messages
+                if (error.code === 'auth/unauthorized-domain') {
+                    alert('Domain not authorized. Please contact support.');
+                } else if (error.code === 'auth/popup-closed-by-user') {
+                    alert('Sign-in popup was closed. Please try again.');
+                } else if (error.code === 'auth/popup-blocked') {
+                    alert('Popup was blocked. Please allow popups for this site.');
+                } else {
+                    alert('Sign-in failed: ' + error.message);
+                }
                 throw error;
             }
         };
