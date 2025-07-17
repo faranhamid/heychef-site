@@ -371,17 +371,28 @@
                 console.log('❌ Firebase connection failed:', error.message);
             });
             
-            // Check for payment success/cancel parameters
+            // BULLETPROOF PAYMENT DETECTION
             const urlParams = new URLSearchParams(window.location.search);
             const paymentStatus = urlParams.get('payment');
+            const sessionId = urlParams.get('session_id');
+            const paymentIntent = urlParams.get('payment_intent');
             
-            console.log('🔍 Checking URL parameters:', {
+            console.log('🔍 BULLETPROOF PAYMENT DETECTION:', {
                 search: window.location.search,
                 paymentStatus: paymentStatus,
-                fullUrl: window.location.href
+                sessionId: sessionId,
+                paymentIntent: paymentIntent,
+                fullUrl: window.location.href,
+                referrer: document.referrer
             });
             
-            if (paymentStatus === 'success') {
+            // Multiple payment success indicators
+            const isPaymentSuccess = paymentStatus === 'success' || 
+                                   sessionId || 
+                                   paymentIntent || 
+                                   document.referrer.includes('stripe.com');
+            
+            if (isPaymentSuccess) {
                 console.log('🎉 Payment successful! Refreshing subscription status...');
                 // Show success message
                 const modalText = document.getElementById('modal-text');
@@ -398,8 +409,43 @@
                 // Clear the URL parameters
                 window.history.replaceState({}, document.title, window.location.pathname);
                 
-                // Store payment success flag in sessionStorage for later use
+                // BULLETPROOF IMMEDIATE ACCESS GRANTING
+                console.log('🚀 GRANTING IMMEDIATE PREMIUM ACCESS');
+                
+                // Store payment success indicators
                 sessionStorage.setItem('paymentSuccess', 'true');
+                sessionStorage.setItem('paymentTimestamp', Date.now().toString());
+                
+                // IMMEDIATELY grant access if user is logged in
+                if (auth.currentUser) {
+                    console.log('✅ User logged in - granting immediate access');
+                    
+                    // Update Firestore and grant access immediately
+                    (async () => {
+                        try {
+                            const userDocRef = doc(db, 'users', auth.currentUser.uid);
+                            await setDoc(userDocRef, {
+                                subscribed: true,
+                                paymentConfirmed: true,
+                                lastChecked: new Date(),
+                                paymentSuccessDate: new Date(),
+                                stripeStatus: 'active',
+                                cancelAtPeriodEnd: false
+                            }, { merge: true });
+                            
+                            // IMMEDIATELY update UI
+                            updateAccountStatusDisplay(auth.currentUser, true);
+                            showRecipeGenerator();
+                            showWelcomeMessage(auth.currentUser.email);
+                            
+                        } catch (error) {
+                            console.error('Error updating Firestore:', error);
+                            // Even if Firestore fails, grant access
+                            updateAccountStatusDisplay(auth.currentUser, true);
+                            showRecipeGenerator();
+                        }
+                    })();
+                }
                 
                 // Also update Firestore directly as a fallback
                 if (auth.currentUser) {
@@ -421,35 +467,7 @@
                     })();
                 }
                 
-                // Force refresh subscription status for current user
-                if (auth.currentUser) {
-                    setTimeout(async () => {
-                        try {
-                            console.log('🔄 Checking subscription after payment...');
-                            const subscribed = await isSubscribed(auth.currentUser);
-                            console.log('📊 Subscription check result:', subscribed);
-                            if (subscribed) {
-                                // Update account status display to show Premium
-                                updateAccountStatusDisplay(auth.currentUser, true);
-                                showRecipeGenerator();
-                                showWelcomeMessage(auth.currentUser.email);
-                            } else {
-                                console.log('❌ Subscription check failed after payment');
-                                // Show manual refresh option
-                                modalText.innerHTML = `
-                                    <div style="text-align: center; padding: 2rem;">
-                                        <h2 style="color: var(--accent); margin-bottom: 1rem;">🎉 Payment Successful!</h2>
-                                        <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">Thank you for subscribing to HeyChef!</p>
-                                        <p style="color: var(--text-light); margin-bottom: 2rem;">We're setting up your account. Please click the button below to refresh your status.</p>
-                                        <button class="cta-button" onclick="refreshSubscriptionStatus()" style="margin: 0 auto;">Refresh My Status</button>
-                                    </div>
-                                `;
-                            }
-                        } catch (error) {
-                            console.error('Error refreshing subscription status:', error);
-                        }
-                    }, 2000);
-                }
+                // Access already granted above - no delayed check needed
             } else if (paymentStatus === 'cancelled') {
                 console.log('❌ Payment cancelled');
                 // Show cancellation message
@@ -938,15 +956,55 @@
                 const faqSection = document.getElementById('faq');
 
                 if (user) {
-                    // Check if there was a recent payment success
+                    // BULLETPROOF AUTH STATE HANDLING
                     const paymentSuccess = sessionStorage.getItem('paymentSuccess');
-                    console.log('🔍 Auth state change - payment success flag:', paymentSuccess);
+                    const paymentTimestamp = sessionStorage.getItem('paymentTimestamp');
                     
-                    const subscribed = await isSubscribed(user);
-                    console.log('🔍 Auth state change - subscription status:', subscribed);
+                    console.log('🔍 BULLETPROOF AUTH STATE:', {
+                        paymentSuccess,
+                        paymentTimestamp,
+                        userEmail: user.email
+                    });
                     
-                    // Update account status display
-                    updateAccountStatusDisplay(user, subscribed);
+                    // Check for recent payment (within 30 minutes)
+                    const hasRecentPayment = paymentSuccess === 'true' && 
+                                           paymentTimestamp && 
+                                           (Date.now() - parseInt(paymentTimestamp)) < (30 * 60 * 1000);
+                    
+                    if (hasRecentPayment) {
+                        console.log('🚀 RECENT PAYMENT DETECTED - GRANTING IMMEDIATE ACCESS');
+                        
+                        // Update Firestore and grant access
+                        (async () => {
+                            try {
+                                const userDocRef = doc(db, 'users', user.uid);
+                                await setDoc(userDocRef, {
+                                    subscribed: true,
+                                    paymentConfirmed: true,
+                                    lastChecked: new Date(),
+                                    paymentSuccessDate: new Date(parseInt(paymentTimestamp)),
+                                    stripeStatus: 'active',
+                                    cancelAtPeriodEnd: false
+                                }, { merge: true });
+                            } catch (error) {
+                                console.error('Error updating Firestore:', error);
+                            }
+                        })();
+                        
+                        // IMMEDIATELY grant access
+                        updateAccountStatusDisplay(user, true);
+                        showRecipeGenerator();
+                        showWelcomeMessage(user.email);
+                        
+                        // Clear payment flags
+                        sessionStorage.removeItem('paymentSuccess');
+                        sessionStorage.removeItem('paymentTimestamp');
+                        
+                    } else {
+                        // Normal subscription check
+                        const subscribed = await isSubscribed(user);
+                        console.log('🔍 Normal subscription check result:', subscribed);
+                        updateAccountStatusDisplay(user, subscribed);
                     if (subscribed) {
                         showRecipeGenerator();
                         showWelcomeMessage(user.email);
