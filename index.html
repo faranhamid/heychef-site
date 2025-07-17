@@ -957,9 +957,38 @@
                         <button class="cta-button" onclick="redirectToStripe('annual')" style="width:220px;">Annual - $99.99/yr <span style='color:var(--accent);'>(Save 16%)</span></button>
                     </div>
                     <div style="margin-top:2rem; color:var(--text-light); font-size:0.95rem;">Cancel anytime. Secure payment via Stripe.</div>
+                    <div style="margin-top:1rem; padding:1rem; background:#f3f4f6; border-radius:8px;">
+                        <p style="font-size:0.9rem; color:#6b7280; margin-bottom:0.5rem;">Already paid? Click below to refresh your status:</p>
+                        <button class="cta-button" onclick="refreshSubscriptionStatus()" style="background:#6b7280; font-size:0.9rem; padding:0.5rem 1rem;">Refresh Subscription Status</button>
+                    </div>
                 </div>
             `;
             document.getElementById('modal').style.display = 'flex';
+        };
+
+        // Manual subscription status refresh
+        window.refreshSubscriptionStatus = async function() {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('Please sign in first.');
+                return;
+            }
+            
+            try {
+                console.log('🔄 Manually refreshing subscription status...');
+                const subscribed = await isSubscribed(user);
+                if (subscribed) {
+                    showRecipeGenerator();
+                    showWelcomeMessage(user.email);
+                    closeModal();
+                    alert('✅ Subscription confirmed! You now have Premium access.');
+                } else {
+                    alert('❌ No active subscription found. Please complete your payment or contact support.');
+                }
+            } catch (error) {
+                console.error('Error refreshing subscription:', error);
+                alert('Error checking subscription status. Please try again.');
+            }
         };
 
         // 4. Redirect to Stripe checkout
@@ -969,11 +998,13 @@
                 alert('Please sign in first.');
                 return;
             }
+            const successUrl = window.location.origin + '/?payment=success';
+            const cancelUrl = window.location.origin + '/?payment=cancelled';
             let stripeUrl = '';
             if (plan === 'monthly') {
-                stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(window.location.origin + '?payment=success') + '&cancel_url=' + encodeURIComponent(window.location.origin + '?payment=cancelled');
+                stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
             } else {
-                stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(window.location.origin + '?payment=success') + '&cancel_url=' + encodeURIComponent(window.location.origin + '?payment=cancelled');
+                stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
             }
             window.location.href = stripeUrl;
         };
@@ -1401,7 +1432,9 @@
                             console.error('Error checking subscription:', error);
                         }
                         // User is not subscribed - open Stripe checkout in popup for monthly plan
-                        const stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(window.location.origin + '?payment=success') + '&cancel_url=' + encodeURIComponent(window.location.origin + '?payment=cancelled');
+                        const successUrl = window.location.origin + '/?payment=success';
+                        const cancelUrl = window.location.origin + '/?payment=cancelled';
+                        const stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
                         console.log('Opening Stripe popup:', stripeUrl);
                         const popup = window.open(stripeUrl, 'stripe-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
                         // Check if popup was blocked
@@ -1439,7 +1472,9 @@
                             console.error('Error checking subscription:', error);
                         }
                         // User is not subscribed - open Stripe checkout in popup for annual plan
-                        const stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(window.location.origin + '?payment=success') + '&cancel_url=' + encodeURIComponent(window.location.origin + '?payment=cancelled');
+                        const successUrl = window.location.origin + '/?payment=success';
+                        const cancelUrl = window.location.origin + '/?payment=cancelled';
+                        const stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
                         console.log('Opening Stripe popup:', stripeUrl);
                         const popup = window.open(stripeUrl, 'stripe-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
                         // Check if popup was blocked
@@ -1497,7 +1532,9 @@
                             const modalAnnual = document.getElementById('modal-annual-subscribe');
                             if (modalMonthly) {
                                 modalMonthly.onclick = () => {
-                                    const stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(window.location.origin + '?payment=success') + '&cancel_url=' + encodeURIComponent(window.location.origin + '?payment=cancelled');
+                                    const successUrl = window.location.origin + '/?payment=success';
+                                    const cancelUrl = window.location.origin + '/?payment=cancelled';
+                                    const stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
                                     const popup = window.open(stripeUrl, 'stripe-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
                                     if (!popup || popup.closed || typeof popup.closed == 'undefined') {
                                         alert('Please allow popups for this site to complete your subscription.');
@@ -1507,7 +1544,9 @@
                             }
                             if (modalAnnual) {
                                 modalAnnual.onclick = () => {
-                                    const stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(window.location.origin + '?payment=success') + '&cancel_url=' + encodeURIComponent(window.location.origin + '?payment=cancelled');
+                                    const successUrl = window.location.origin + '/?payment=success';
+                                    const cancelUrl = window.location.origin + '/?payment=cancelled';
+                                    const stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
                                     const popup = window.open(stripeUrl, 'stripe-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
                                     if (!popup || popup.closed || typeof popup.closed == 'undefined') {
                                         alert('Please allow popups for this site to complete your subscription.');
