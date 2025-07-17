@@ -877,7 +877,7 @@
             // Try backend API
             try {
                 console.log('📡 Making request to /api/subscription-status...');
-                const response = await fetch('/api/subscription-status', {
+                const response = await fetch('http://localhost:3001/api/subscription-status', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
