@@ -453,20 +453,25 @@
             try {
                 console.log('🚀 GRANTING PREMIUM ACCESS TO:', user.email);
                 
-                // Update Firestore with premium status
-                const userDocRef = doc(db, 'users', user.uid);
-                await setDoc(userDocRef, {
-                    subscribed: true,
-                    paymentConfirmed: true,
-                    lastChecked: new Date(),
-                    paymentSuccessDate: new Date(),
-                    stripeStatus: 'active',
-                    cancelAtPeriodEnd: false,
-                    email: user.email,
-                    uid: user.uid
-                }, { merge: true });
-                
-                console.log('✅ Firestore updated with premium status');
+                // Update Firestore with premium status (with error handling)
+                try {
+                    const userDocRef = doc(db, 'users', user.uid);
+                    await setDoc(userDocRef, {
+                        subscribed: true,
+                        paymentConfirmed: true,
+                        lastChecked: new Date(),
+                        paymentSuccessDate: new Date(),
+                        stripeStatus: 'active',
+                        cancelAtPeriodEnd: false,
+                        email: user.email,
+                        uid: user.uid
+                    }, { merge: true });
+                    
+                    console.log('✅ Firestore updated with premium status');
+                } catch (firestoreError) {
+                    console.warn('⚠️ Firestore update failed, but continuing:', firestoreError);
+                    // Continue even if Firestore fails
+                }
                 
                 // Update UI immediately
                 updateAccountStatusDisplay(user, true);
@@ -910,15 +915,21 @@
                     
                     if (hasSubscription && hasPayment && isActive) {
                         console.log('✅ User has paid subscription - granting access');
-                        // Update Firestore cache
-                        const userDocRef = doc(db, 'users', user.uid);
-                        await setDoc(userDocRef, {
-                            subscribed: true,
-                            paymentConfirmed: true,
-                            lastChecked: new Date(),
-                            stripeStatus: result.status,
-                            cancelAtPeriodEnd: result.cancelAtPeriodEnd
-                        }, { merge: true });
+                                        // Update Firestore cache (with error handling)
+                try {
+                    const userDocRef = doc(db, 'users', user.uid);
+                    await setDoc(userDocRef, {
+                        subscribed: true,
+                        paymentConfirmed: true,
+                        lastChecked: new Date(),
+                        stripeStatus: result.status,
+                        cancelAtPeriodEnd: result.cancelAtPeriodEnd
+                    }, { merge: true });
+                    console.log('✅ Firestore cache updated successfully');
+                } catch (firestoreError) {
+                    console.warn('⚠️ Firestore update failed, but continuing:', firestoreError);
+                    // Continue even if Firestore fails
+                }
                         return true;
                     } else {
                         console.log('❌ User does not have paid subscription - denying access');
@@ -928,15 +939,21 @@
                             status: result.status
                         });
                         
-                        // Update Firestore cache to false
-                        const userDocRef = doc(db, 'users', user.uid);
-                        await setDoc(userDocRef, {
-                            subscribed: false,
-                            paymentConfirmed: false,
-                            lastChecked: new Date(),
-                            stripeStatus: result.status || 'none',
-                            cancelAtPeriodEnd: result.cancelAtPeriodEnd || false
-                        }, { merge: true });
+                        // Update Firestore cache to false (with error handling)
+                        try {
+                            const userDocRef = doc(db, 'users', user.uid);
+                            await setDoc(userDocRef, {
+                                subscribed: false,
+                                paymentConfirmed: false,
+                                lastChecked: new Date(),
+                                stripeStatus: result.status || 'none',
+                                cancelAtPeriodEnd: result.cancelAtPeriodEnd || false
+                            }, { merge: true });
+                            console.log('✅ Firestore cache updated to false');
+                        } catch (firestoreError) {
+                            console.warn('⚠️ Firestore update failed, but continuing:', firestoreError);
+                            // Continue even if Firestore fails
+                        }
                         return false;
                     }
                 } else {
