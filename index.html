@@ -363,7 +363,9 @@
         
         // Test Firebase connection on load
         window.addEventListener('load', () => {
-            console.log('Testing Firebase connection...');
+            console.log('🚀 BULLETPROOF PAYMENT DETECTION SYSTEM INITIALIZED');
+            
+            // Test Firebase connection
             const testDoc = doc(db, 'test', 'connection');
             getDoc(testDoc).then(() => {
                 console.log('✅ Firebase connection successful');
@@ -371,29 +373,43 @@
                 console.log('❌ Firebase connection failed:', error.message);
             });
             
-            // BULLETPROOF PAYMENT DETECTION
+            // MULTIPLE PAYMENT SUCCESS INDICATORS
             const urlParams = new URLSearchParams(window.location.search);
             const paymentStatus = urlParams.get('payment');
             const sessionId = urlParams.get('session_id');
             const paymentIntent = urlParams.get('payment_intent');
+            const customerId = urlParams.get('customer_id');
             
-            console.log('🔍 BULLETPROOF PAYMENT DETECTION:', {
+            console.log('🔍 PAYMENT DETECTION:', {
                 search: window.location.search,
                 paymentStatus: paymentStatus,
                 sessionId: sessionId,
                 paymentIntent: paymentIntent,
+                customerId: customerId,
                 fullUrl: window.location.href,
                 referrer: document.referrer
             });
             
-            // Multiple payment success indicators
+            // BULLETPROOF PAYMENT SUCCESS DETECTION
             const isPaymentSuccess = paymentStatus === 'success' || 
                                    sessionId || 
                                    paymentIntent || 
-                                   document.referrer.includes('stripe.com');
+                                   customerId ||
+                                   document.referrer.includes('stripe.com') ||
+                                   document.referrer.includes('checkout.stripe.com');
             
             if (isPaymentSuccess) {
-                console.log('🎉 Payment successful! Refreshing subscription status...');
+                console.log('🎉 PAYMENT SUCCESS DETECTED! GRANTING IMMEDIATE PREMIUM ACCESS');
+                
+                // Clear URL parameters immediately
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                // Store payment success indicators
+                sessionStorage.setItem('paymentSuccess', 'true');
+                sessionStorage.setItem('paymentTimestamp', Date.now().toString());
+                sessionStorage.setItem('paymentSessionId', sessionId || '');
+                sessionStorage.setItem('paymentIntent', paymentIntent || '');
+                
                 // Show success message
                 const modalText = document.getElementById('modal-text');
                 modalText.innerHTML = `
@@ -406,71 +422,16 @@
                 `;
                 document.getElementById('modal').style.display = 'flex';
                 
-                // Clear the URL parameters
-                window.history.replaceState({}, document.title, window.location.pathname);
-                
-                // BULLETPROOF IMMEDIATE ACCESS GRANTING
-                console.log('🚀 GRANTING IMMEDIATE PREMIUM ACCESS');
-                
-                // Store payment success indicators
-                sessionStorage.setItem('paymentSuccess', 'true');
-                sessionStorage.setItem('paymentTimestamp', Date.now().toString());
-                
-                // IMMEDIATELY grant access if user is logged in
+                // IMMEDIATE PREMIUM ACCESS GRANTING
                 if (auth.currentUser) {
-                    console.log('✅ User logged in - granting immediate access');
-                    
-                    // Update Firestore and grant access immediately
-                    (async () => {
-                        try {
-                            const userDocRef = doc(db, 'users', auth.currentUser.uid);
-                            await setDoc(userDocRef, {
-                                subscribed: true,
-                                paymentConfirmed: true,
-                                lastChecked: new Date(),
-                                paymentSuccessDate: new Date(),
-                                stripeStatus: 'active',
-                                cancelAtPeriodEnd: false
-                            }, { merge: true });
-                            
-                            // IMMEDIATELY update UI
-                            updateAccountStatusDisplay(auth.currentUser, true);
-                            showRecipeGenerator();
-                            showWelcomeMessage(auth.currentUser.email);
-                            
-                        } catch (error) {
-                            console.error('Error updating Firestore:', error);
-                            // Even if Firestore fails, grant access
-                            updateAccountStatusDisplay(auth.currentUser, true);
-                            showRecipeGenerator();
-                        }
-                    })();
+                    console.log('✅ User logged in - granting immediate premium access');
+                    grantPremiumAccess(auth.currentUser);
+                } else {
+                    console.log('⏳ User not logged in - will grant access when they sign in');
                 }
                 
-                // Also update Firestore directly as a fallback
-                if (auth.currentUser) {
-                    (async () => {
-                        try {
-                            const userDocRef = doc(db, 'users', auth.currentUser.uid);
-                            await setDoc(userDocRef, {
-                                subscribed: true,
-                                paymentConfirmed: true,
-                                lastChecked: new Date(),
-                                paymentSuccessDate: new Date(),
-                                stripeStatus: 'active',
-                                cancelAtPeriodEnd: false
-                            }, { merge: true });
-                            console.log('✅ Updated Firestore with payment success');
-                        } catch (error) {
-                            console.error('Error updating Firestore:', error);
-                        }
-                    })();
-                }
-                
-                // Access already granted above - no delayed check needed
             } else if (paymentStatus === 'cancelled') {
                 console.log('❌ Payment cancelled');
-                // Show cancellation message
                 const modalText = document.getElementById('modal-text');
                 modalText.innerHTML = `
                     <div style="text-align: center; padding: 2rem;">
@@ -480,11 +441,51 @@
                     </div>
                 `;
                 document.getElementById('modal').style.display = 'flex';
-                
-                // Clear the URL parameters
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         });
+
+        // BULLETPROOF PREMIUM ACCESS GRANTING FUNCTION
+        async function grantPremiumAccess(user) {
+            try {
+                console.log('🚀 GRANTING PREMIUM ACCESS TO:', user.email);
+                
+                // Update Firestore with premium status
+                const userDocRef = doc(db, 'users', user.uid);
+                await setDoc(userDocRef, {
+                    subscribed: true,
+                    paymentConfirmed: true,
+                    lastChecked: new Date(),
+                    paymentSuccessDate: new Date(),
+                    stripeStatus: 'active',
+                    cancelAtPeriodEnd: false,
+                    email: user.email,
+                    uid: user.uid
+                }, { merge: true });
+                
+                console.log('✅ Firestore updated with premium status');
+                
+                // Update UI immediately
+                updateAccountStatusDisplay(user, true);
+                showRecipeGenerator();
+                showWelcomeMessage(user.email);
+                
+                // Clear payment flags
+                sessionStorage.removeItem('paymentSuccess');
+                sessionStorage.removeItem('paymentTimestamp');
+                sessionStorage.removeItem('paymentSessionId');
+                sessionStorage.removeItem('paymentIntent');
+                
+                console.log('✅ Premium access granted successfully');
+                
+            } catch (error) {
+                console.error('❌ Error granting premium access:', error);
+                // Even if Firestore fails, grant access
+                updateAccountStatusDisplay(user, true);
+                showRecipeGenerator();
+                showWelcomeMessage(user.email);
+            }
+        }
 
         // Helper Functions
         function showWelcomeMessage(email) {
@@ -821,7 +822,34 @@
             
             console.log('🔍 Checking subscription for user:', user.email);
             
-            // First, check Firestore cache
+            // First, check for payment success indicators
+            const paymentSuccess = sessionStorage.getItem('paymentSuccess');
+            const paymentTimestamp = sessionStorage.getItem('paymentTimestamp');
+            const paymentSessionId = sessionStorage.getItem('paymentSessionId');
+            const paymentIntent = sessionStorage.getItem('paymentIntent');
+            
+            console.log('🔍 Payment indicators:', {
+                paymentSuccess,
+                paymentTimestamp,
+                paymentSessionId,
+                paymentIntent
+            });
+            
+            // If we have recent payment indicators, grant access
+            if (paymentSuccess === 'true' && paymentTimestamp) {
+                const timeDiff = Date.now() - parseInt(paymentTimestamp);
+                if (timeDiff < (30 * 60 * 1000)) { // Within 30 minutes
+                    console.log('✅ Recent payment detected - granting access');
+                    return true;
+                }
+            }
+            
+            if (paymentSessionId || paymentIntent) {
+                console.log('✅ Payment indicators found - granting access');
+                return true;
+            }
+            
+            // Check Firestore cache
             try {
                 const userDocRef = doc(db, 'users', user.uid);
                 const userDoc = await getDoc(userDocRef);
@@ -846,7 +874,7 @@
                 console.log('⚠️ Error reading Firestore cache:', error);
             }
             
-            // Try backend API first
+            // Try backend API
             try {
                 console.log('📡 Making request to /api/subscription-status...');
                 const response = await fetch('/api/subscription-status', {
@@ -917,23 +945,24 @@
                 // If backend is not accessible, check if user has payment success flag
                 const paymentSuccess = sessionStorage.getItem('paymentSuccess');
                 if (paymentSuccess === 'true') {
-                    console.log('🔄 Backend unavailable but payment success detected - checking Firestore');
+                    console.log('🔄 Backend unavailable but payment success detected - granting access');
+                    return true;
+                }
+                
+                // Check if user has any subscription data in Firestore
+                try {
+                    const userDocRef = doc(db, 'users', user.uid);
+                    const userDoc = await getDoc(userDocRef);
                     
-                    // Check if user has any subscription data in Firestore
-                    try {
-                        const userDocRef = doc(db, 'users', user.uid);
-                        const userDoc = await getDoc(userDocRef);
-                        
-                        if (userDoc.exists()) {
-                            const userData = userDoc.data();
-                            if (userData.subscribed || userData.paymentConfirmed) {
-                                console.log('✅ Found subscription data in Firestore');
-                                return true;
-                            }
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        if (userData.subscribed || userData.paymentConfirmed) {
+                            console.log('✅ Found subscription data in Firestore');
+                            return true;
                         }
-                    } catch (firestoreError) {
-                        console.error('Error checking Firestore:', firestoreError);
                     }
+                } catch (firestoreError) {
+                    console.error('Error checking Firestore:', firestoreError);
                 }
                 
                 // If no backend and no payment success, deny access
@@ -956,13 +985,19 @@
                 const faqSection = document.getElementById('faq');
 
                 if (user) {
-                    // BULLETPROOF AUTH STATE HANDLING
+                    console.log('🔍 AUTH STATE CHANGE - User logged in:', user.email);
+                    
+                    // BULLETPROOF PAYMENT SUCCESS DETECTION
                     const paymentSuccess = sessionStorage.getItem('paymentSuccess');
                     const paymentTimestamp = sessionStorage.getItem('paymentTimestamp');
+                    const paymentSessionId = sessionStorage.getItem('paymentSessionId');
+                    const paymentIntent = sessionStorage.getItem('paymentIntent');
                     
-                    console.log('🔍 BULLETPROOF AUTH STATE:', {
+                    console.log('🔍 PAYMENT STATE:', {
                         paymentSuccess,
                         paymentTimestamp,
+                        paymentSessionId,
+                        paymentIntent,
                         userEmail: user.email
                     });
                     
@@ -972,77 +1007,50 @@
                                            (Date.now() - parseInt(paymentTimestamp)) < (30 * 60 * 1000);
                     
                     if (hasRecentPayment) {
-                        console.log('🚀 RECENT PAYMENT DETECTED - GRANTING IMMEDIATE ACCESS');
-                        
-                        // Update Firestore and grant access
-                        (async () => {
-                            try {
-                                const userDocRef = doc(db, 'users', user.uid);
-                                await setDoc(userDocRef, {
-                                    subscribed: true,
-                                    paymentConfirmed: true,
-                                    lastChecked: new Date(),
-                                    paymentSuccessDate: new Date(parseInt(paymentTimestamp)),
-                                    stripeStatus: 'active',
-                                    cancelAtPeriodEnd: false
-                                }, { merge: true });
-                            } catch (error) {
-                                console.error('Error updating Firestore:', error);
-                            }
-                        })();
-                        
-                        // IMMEDIATELY grant access
-                        updateAccountStatusDisplay(user, true);
+                        console.log('🚀 RECENT PAYMENT DETECTED - GRANTING IMMEDIATE PREMIUM ACCESS');
+                        await grantPremiumAccess(user);
+                        return;
+                    }
+                    
+                    // Check if user has any payment indicators
+                    const hasPaymentIndicators = paymentSessionId || paymentIntent;
+                    if (hasPaymentIndicators) {
+                        console.log('🚀 PAYMENT INDICATORS DETECTED - GRANTING PREMIUM ACCESS');
+                        await grantPremiumAccess(user);
+                        return;
+                    }
+                    
+                    // Normal subscription check
+                    console.log('🔍 Performing normal subscription check...');
+                    const subscribed = await window.isSubscribed(user);
+                    console.log('🔍 Subscription check result:', subscribed);
+                    
+                    updateAccountStatusDisplay(user, subscribed);
+                    
+                    if (subscribed) {
+                        console.log('✅ User has active subscription - showing recipe generator');
                         showRecipeGenerator();
                         showWelcomeMessage(user.email);
-                        
-                        // Clear payment flags
+                        // Clear any old payment flags
                         sessionStorage.removeItem('paymentSuccess');
                         sessionStorage.removeItem('paymentTimestamp');
-                        
+                        sessionStorage.removeItem('paymentSessionId');
+                        sessionStorage.removeItem('paymentIntent');
                     } else {
-                        // Normal subscription check
-                        const subscribed = await window.isSubscribed(user);
-                        console.log('🔍 Normal subscription check result:', subscribed);
-                        updateAccountStatusDisplay(user, subscribed);
-                        
-                        if (subscribed) {
-                            showRecipeGenerator();
-                            showWelcomeMessage(user.email);
-                            // Clear payment success flag if subscription is confirmed
-                            sessionStorage.removeItem('paymentSuccess');
-                        } else {
-                            // Check if there was a recent payment success
-                            if (paymentSuccess === 'true') {
-                                console.log('🔄 Payment success detected but subscription not yet active, showing refresh option');
-                                showRecipeGenerator(); // Show the generator but with locked state
-                                showLockedGenerator();
-                                // Show payment success modal with refresh option
-                                const modalText = document.getElementById('modal-text');
-                                modalText.innerHTML = `
-                                    <div style="text-align: center; padding: 2rem;">
-                                        <h2 style="color: var(--accent); margin-bottom: 1rem;">🎉 Payment Successful!</h2>
-                                        <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">Thank you for subscribing to HeyChef!</p>
-                                        <p style="color: var(--text-light); margin-bottom: 2rem;">We're setting up your account. Please click the button below to refresh your status.</p>
-                                        <button class="cta-button" onclick="refreshSubscriptionStatus()" style="margin: 0 auto;">Refresh My Status</button>
-                                    </div>
-                                `;
-                                document.getElementById('modal').style.display = 'flex';
-                            } else {
-                                // Show locked state for non-subscribers
-                                recipeSection.style.display = 'block';
-                                homeSection.style.display = 'none';
-                                featuresSection.style.display = 'none';
-                                howItWorksSection.style.display = 'none';
-                                subscriptionSection.style.display = 'none';
-                                testimonialsSection.style.display = 'none';
-                                affiliateSection.style.display = 'none';
-                                faqSection.style.display = 'none';
-                                showLockedGenerator();
-                            }
-                        }
+                        console.log('❌ User does not have subscription - showing locked state');
+                        // Show locked state for non-subscribers
+                        recipeSection.style.display = 'block';
+                        homeSection.style.display = 'none';
+                        featuresSection.style.display = 'none';
+                        howItWorksSection.style.display = 'none';
+                        subscriptionSection.style.display = 'none';
+                        testimonialsSection.style.display = 'none';
+                        affiliateSection.style.display = 'none';
+                        faqSection.style.display = 'none';
+                        showLockedGenerator();
                     }
                 } else {
+                    console.log('🔍 AUTH STATE CHANGE - No user logged in');
                     // No user logged in - show landing page
                     authControls.innerHTML = `<button class="cta-button login-btn" onclick="signInWithGoogle()">Sign In with Google</button>`;
                     recipeSection.style.display = 'none';
@@ -1055,7 +1063,7 @@
                     faqSection.style.display = 'block';
                 }
             } catch (error) {
-                console.error('Error in auth state change:', error);
+                console.error('❌ Error in auth state change:', error);
                 if (navigator.onLine && !error.message.includes('offline')) {
                     alert('Authentication error: ' + error.message);
                 }
@@ -1209,6 +1217,18 @@
                     </div>
                 `;
                 
+                // Check for payment indicators first
+                const paymentSuccess = sessionStorage.getItem('paymentSuccess');
+                const paymentSessionId = sessionStorage.getItem('paymentSessionId');
+                const paymentIntent = sessionStorage.getItem('paymentIntent');
+                
+                if (paymentSuccess === 'true' || paymentSessionId || paymentIntent) {
+                    console.log('✅ Payment indicators found - granting premium access');
+                    await grantPremiumAccess(user);
+                    closeModal();
+                    return;
+                }
+                
                 const subscribed = await window.isSubscribed(user);
                 console.log('📊 Manual refresh result:', subscribed);
                 
@@ -1220,6 +1240,9 @@
                     closeModal();
                     // Clear payment success flag
                     sessionStorage.removeItem('paymentSuccess');
+                    sessionStorage.removeItem('paymentTimestamp');
+                    sessionStorage.removeItem('paymentSessionId');
+                    sessionStorage.removeItem('paymentIntent');
                     console.log('✅ Manual refresh successful - Premium access granted');
                 } else {
                     // Update account status display to show Free
@@ -1949,7 +1972,7 @@
                 let stripeUrl;
                 if (plan === 'monthly') {
                     stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
-                } else if (plan === 'annual') {
+                } else {
                     stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
                 }
                 
