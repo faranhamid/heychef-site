@@ -1455,6 +1455,41 @@
                 });
             }
         });
+
+        // Authentication Functions
+        window.signInWithGoogle = async function() {
+            try {
+                console.log('Starting Google sign-in...');
+                const provider = new GoogleAuthProvider();
+                console.log('Current domain:', window.location.hostname);
+                
+                // Try popup first, fallback to redirect
+                try {
+                    console.log('Attempting popup sign-in...');
+                    const result = await signInWithPopup(auth, provider);
+                    console.log('Sign-in successful via popup:', result.user.email);
+                    return result.user;
+                } catch (popupError) {
+                    console.log('Popup failed, trying redirect:', popupError.message);
+                    await signInWithRedirect(auth, provider);
+                }
+            } catch (error) {
+                console.error('Google sign-in error:', error);
+                alert('Sign-in failed. Please try again.');
+                throw error;
+            }
+        };
+
+        window.signOutUser = async function() {
+            try {
+                console.log('Signing out user...');
+                await signOut(auth);
+                console.log('User signed out successfully');
+            } catch (error) {
+                console.error('Sign-out error:', error);
+                alert('Sign-out failed. Please try again.');
+            }
+        };
     </script>
     <style>
         .account-status { font-size: 0.8em; margin-left: 0.5em; padding: 0.2em 0.7em; border-radius: 8px; font-weight: 600; }
