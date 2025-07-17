@@ -398,6 +398,8 @@
                         try {
                             const subscribed = await isSubscribed(auth.currentUser);
                             if (subscribed) {
+                                // Update account status display to show Premium
+                                updateAccountStatusDisplay(auth.currentUser, true);
                                 showRecipeGenerator();
                                 showWelcomeMessage(auth.currentUser.email);
                             }
@@ -440,6 +442,42 @@
             setTimeout(() => {
                 document.getElementById('modal').style.display = 'none';
             }, 3000);
+        }
+
+        // Function to update account status display
+        function updateAccountStatusDisplay(user, subscribed) {
+            const authControls = document.getElementById('auth-controls');
+            const accountStatus = subscribed ? 'Premium' : 'Free';
+            authControls.innerHTML = `
+                <div class="user-dropdown">
+                    <span class="user-email" onclick="toggleUserDropdown()">${user.email} <span class="account-status ${subscribed ? 'premium' : 'free'} animate__animated animate__pulse">${accountStatus}</span> <i class="fas fa-chevron-down"></i></span>
+                    <div class="dropdown-menu" id="user-dropdown-menu">
+                        <div class="dropdown-item" onclick="showAccountInfo()">
+                            <i class="fas fa-user"></i>
+                            <span>Account Info</span>
+                        </div>
+                        <div class="dropdown-item" onclick="showSubscriptionDetails()">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Subscription</span>
+                        </div>
+                        ${subscribed ? `<div class="dropdown-item" onclick="showUnsubscribeModal()"><i class="fas fa-times-circle"></i><span>Unsubscribe</span></div>` : `<div class="dropdown-item" onclick="showUpgradePrompt()"><i class="fas fa-crown"></i><span>Upgrade to Premium</span></div>`}
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item" onclick="signOutUser()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Sign Out</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add a brief flash effect to indicate status change
+            const statusElement = authControls.querySelector('.account-status');
+            if (statusElement) {
+                statusElement.style.animation = 'none';
+                setTimeout(() => {
+                    statusElement.style.animation = 'pulse 0.6s ease-in-out';
+                }, 10);
+            }
         }
 
         function showSubscriptionRequired() {
@@ -565,6 +603,9 @@
                     localCancellation: true
                 }, { merge: true });
 
+                // Update account status display to show Free
+                updateAccountStatusDisplay(user, false);
+
                 // Show success message
                 const modalText = document.getElementById('modal-text');
                 modalText.innerHTML = `
@@ -669,6 +710,9 @@
                     subscriptionType: 'cancelled',
                     stripeCancelledAt: result.cancelledAt
                 }, { merge: true });
+
+                // Update account status display to show Free
+                updateAccountStatusDisplay(user, false);
 
                 // Show success message
                 modalText.innerHTML = `
@@ -799,29 +843,8 @@
 
                 if (user) {
                     const subscribed = await isSubscribed(user);
-                    // Show account status in dropdown
-                    const accountStatus = subscribed ? 'Premium' : 'Free';
-                    authControls.innerHTML = `
-                        <div class="user-dropdown">
-                            <span class="user-email" onclick="toggleUserDropdown()">${user.email} <span class="account-status ${subscribed ? 'premium' : 'free'}">${accountStatus}</span> <i class="fas fa-chevron-down"></i></span>
-                            <div class="dropdown-menu" id="user-dropdown-menu">
-                                <div class="dropdown-item" onclick="showAccountInfo()">
-                                    <i class="fas fa-user"></i>
-                                    <span>Account Info</span>
-                                </div>
-                                <div class="dropdown-item" onclick="showSubscriptionDetails()">
-                                    <i class="fas fa-credit-card"></i>
-                                    <span>Subscription</span>
-                                </div>
-                                ${subscribed ? `<div class="dropdown-item" onclick="showUnsubscribeModal()"><i class="fas fa-times-circle"></i><span>Unsubscribe</span></div>` : `<div class="dropdown-item" onclick="showUpgradePrompt()"><i class="fas fa-crown"></i><span>Upgrade to Premium</span></div>`}
-                                <div class="dropdown-divider"></div>
-                                <div class="dropdown-item" onclick="signOutUser()">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    <span>Sign Out</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    // Update account status display
+                    updateAccountStatusDisplay(user, subscribed);
                     if (subscribed) {
                         showRecipeGenerator();
                         showWelcomeMessage(user.email);
@@ -978,11 +1001,15 @@
                 console.log('🔄 Manually refreshing subscription status...');
                 const subscribed = await isSubscribed(user);
                 if (subscribed) {
+                    // Update account status display to show Premium
+                    updateAccountStatusDisplay(user, true);
                     showRecipeGenerator();
                     showWelcomeMessage(user.email);
                     closeModal();
                     alert('✅ Subscription confirmed! You now have Premium access.');
                 } else {
+                    // Update account status display to show Free
+                    updateAccountStatusDisplay(user, false);
                     alert('❌ No active subscription found. Please complete your payment or contact support.');
                 }
             } catch (error) {
