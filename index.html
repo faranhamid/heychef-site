@@ -1007,38 +1007,39 @@
                         updateAccountStatusDisplay(user, subscribed);
                         
                         if (subscribed) {
-                        showRecipeGenerator();
-                        showWelcomeMessage(user.email);
-                        // Clear payment success flag if subscription is confirmed
-                        sessionStorage.removeItem('paymentSuccess');
-                    } else {
-                        // Check if there was a recent payment success
-                        if (paymentSuccess === 'true') {
-                            console.log('🔄 Payment success detected but subscription not yet active, showing refresh option');
-                            showRecipeGenerator(); // Show the generator but with locked state
-                            showLockedGenerator();
-                            // Show payment success modal with refresh option
-                            const modalText = document.getElementById('modal-text');
-                            modalText.innerHTML = `
-                                <div style="text-align: center; padding: 2rem;">
-                                    <h2 style="color: var(--accent); margin-bottom: 1rem;">🎉 Payment Successful!</h2>
-                                    <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">Thank you for subscribing to HeyChef!</p>
-                                    <p style="color: var(--text-light); margin-bottom: 2rem;">We're setting up your account. Please click the button below to refresh your status.</p>
-                                    <button class="cta-button" onclick="refreshSubscriptionStatus()" style="margin: 0 auto;">Refresh My Status</button>
-                                </div>
-                            `;
-                            document.getElementById('modal').style.display = 'flex';
+                            showRecipeGenerator();
+                            showWelcomeMessage(user.email);
+                            // Clear payment success flag if subscription is confirmed
+                            sessionStorage.removeItem('paymentSuccess');
                         } else {
-                            // Show locked state for non-subscribers
-                            recipeSection.style.display = 'block';
-                            homeSection.style.display = 'none';
-                            featuresSection.style.display = 'none';
-                            howItWorksSection.style.display = 'none';
-                            subscriptionSection.style.display = 'none';
-                            testimonialsSection.style.display = 'none';
-                            affiliateSection.style.display = 'none';
-                            faqSection.style.display = 'none';
-                            showLockedGenerator();
+                            // Check if there was a recent payment success
+                            if (paymentSuccess === 'true') {
+                                console.log('🔄 Payment success detected but subscription not yet active, showing refresh option');
+                                showRecipeGenerator(); // Show the generator but with locked state
+                                showLockedGenerator();
+                                // Show payment success modal with refresh option
+                                const modalText = document.getElementById('modal-text');
+                                modalText.innerHTML = `
+                                    <div style="text-align: center; padding: 2rem;">
+                                        <h2 style="color: var(--accent); margin-bottom: 1rem;">🎉 Payment Successful!</h2>
+                                        <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">Thank you for subscribing to HeyChef!</p>
+                                        <p style="color: var(--text-light); margin-bottom: 2rem;">We're setting up your account. Please click the button below to refresh your status.</p>
+                                        <button class="cta-button" onclick="refreshSubscriptionStatus()" style="margin: 0 auto;">Refresh My Status</button>
+                                    </div>
+                                `;
+                                document.getElementById('modal').style.display = 'flex';
+                            } else {
+                                // Show locked state for non-subscribers
+                                recipeSection.style.display = 'block';
+                                homeSection.style.display = 'none';
+                                featuresSection.style.display = 'none';
+                                howItWorksSection.style.display = 'none';
+                                subscriptionSection.style.display = 'none';
+                                testimonialsSection.style.display = 'none';
+                                affiliateSection.style.display = 'none';
+                                faqSection.style.display = 'none';
+                                showLockedGenerator();
+                            }
                         }
                     }
                 } else {
