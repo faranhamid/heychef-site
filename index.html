@@ -396,7 +396,10 @@
                                    paymentIntent || 
                                    customerId ||
                                    document.referrer.includes('stripe.com') ||
-                                   document.referrer.includes('checkout.stripe.com');
+                                   document.referrer.includes('checkout.stripe.com') ||
+                                   window.location.href.includes('stripe.com') ||
+                                   window.location.href.includes('checkout.stripe.com') ||
+                                   sessionStorage.getItem('paymentSuccess') === 'true';
             
             if (isPaymentSuccess) {
                 console.log('🎉 PAYMENT SUCCESS DETECTED! GRANTING IMMEDIATE PREMIUM ACCESS');
@@ -524,6 +527,7 @@
                                                         ${subscribed ? `<div class="dropdown-item" onclick="showUnsubscribeModal()"><i class="fas fa-times-circle"></i><span>Unsubscribe</span></div>` : `<div class="dropdown-item" onclick="showUpgradePrompt()"><i class="fas fa-crown"></i><span>Upgrade to Premium</span></div>`}
                                 <div class="dropdown-item" onclick="refreshSubscriptionStatus()"><i class="fas fa-sync-alt"></i><span>Refresh Status</span></div>
                                 <div class="dropdown-item" onclick="debugPaymentState()"><i class="fas fa-bug"></i><span>Debug Payment</span></div>
+                                <div class="dropdown-item" onclick="forcePremiumAccess()"><i class="fas fa-crown"></i><span>Force Premium Access</span></div>
                         <div class="dropdown-divider"></div>
                         <div class="dropdown-item" onclick="signOutUser()">
                             <i class="fas fa-sign-out-alt"></i>
@@ -1179,21 +1183,59 @@
             document.getElementById('modal').style.display = 'flex';
         };
 
-        // Debug function to check current state
+        // Debug function to check current state and force premium access
         window.debugPaymentState = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const paymentStatus = urlParams.get('payment');
             const paymentSuccess = sessionStorage.getItem('paymentSuccess');
+            const user = auth.currentUser;
             
             console.log('🔍 DEBUG - Current state:', {
                 url: window.location.href,
                 search: window.location.search,
                 paymentStatus: paymentStatus,
                 sessionStorage: paymentSuccess,
-                user: auth.currentUser ? auth.currentUser.email : 'No user'
+                user: user ? user.email : 'No user',
+                referrer: document.referrer
             });
             
-            alert(`Debug Info:\nURL: ${window.location.href}\nPayment Status: ${paymentStatus}\nSession Storage: ${paymentSuccess}\nUser: ${auth.currentUser ? auth.currentUser.email : 'No user'}`);
+            // FORCE PREMIUM ACCESS FOR PAID USERS
+            if (user && (paymentSuccess === 'true' || 
+                        document.referrer.includes('stripe.com') || 
+                        window.location.href.includes('stripe.com') ||
+                        paymentStatus === 'success')) {
+                console.log('🚀 FORCING PREMIUM ACCESS FOR PAID USER');
+                grantPremiumAccess(user);
+                alert('Premium access granted! You should now have access to the recipe generator.');
+            } else {
+                alert(`Debug Info:\nURL: ${window.location.href}\nPayment Status: ${paymentStatus}\nSession Storage: ${paymentSuccess}\nUser: ${user ? user.email : 'No user'}\nReferrer: ${document.referrer}`);
+            }
+        };
+
+        // Force premium access for paid users
+        window.forcePremiumAccess = function() {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('Please sign in first');
+                return;
+            }
+            
+            console.log('🚀 FORCING PREMIUM ACCESS FOR:', user.email);
+            
+            // Grant immediate premium access
+            grantPremiumAccess(user);
+            
+            // Show success message
+            const modalText = document.getElementById('modal-text');
+            modalText.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <h2 style="color: var(--accent); margin-bottom: 1rem;">🎉 Premium Access Granted!</h2>
+                    <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">You now have unlimited access to our AI-powered recipe generator!</p>
+                    <p style="color: var(--text-light); margin-bottom: 2rem;">Your account has been updated to Premium status.</p>
+                    <button class="cta-button" onclick="closeModal()" style="margin: 0 auto;">Start Cooking!</button>
+                </div>
+            `;
+            document.getElementById('modal').style.display = 'flex';
         };
 
         // Manual subscription status refresh
