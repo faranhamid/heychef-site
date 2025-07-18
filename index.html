@@ -39,7 +39,8 @@
                 <a href="https://docs.google.com/forms/d/e/1FAIpQLScVcxfhDDyvJRZISvcA7xZj1tDJxzvcEA2hZ7_6G7SoJ939OQ/viewform?usp=header" target="_blank">Affiliate</a>
             </nav>
             <div class="auth-controls" id="auth-controls">
-                <button class="cta-button login-btn" onclick="signInWithGoogle()">Sign In with Google</button>
+                <button class="cta-button login-btn" id="google-signin-btn">Sign In with Google</button>
+                <button class="cta-button" id="test-button" style="background: #10b981; margin-left: 10px;">Test JS</button>
             </div>
             <button class="mobile-menu-toggle" id="mobile-menu-toggle">
                 <i class="fas fa-bars"></i>
@@ -348,13 +349,32 @@
         // Debug: Log current domain for Firebase troubleshooting
         console.log('Current domain:', window.location.hostname);
         console.log('Current URL:', window.location.href);
+        console.log('Protocol:', window.location.protocol);
+        console.log('Is HTTPS:', window.location.protocol === 'https:');
+
+        // Check if we're on a live domain and add domain-specific config
+        const isLiveDomain = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        console.log('Is live domain:', isLiveDomain);
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, signInWithPopup, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        
+        let app, auth, db;
+        
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            console.log('✅ Firebase initialized successfully');
+        } catch (error) {
+            console.error('❌ Firebase initialization error:', error);
+            alert('Failed to initialize Firebase. Please refresh the page.');
+        }
+        
+        // Global variables for recipe management
+        let recipes = [];
+        let currentIndex = 0;
         
         // Debug: Check if Firebase is initialized
         console.log('Firebase initialized:', !!app);
@@ -915,21 +935,21 @@
                     
                     if (hasSubscription && hasPayment && isActive) {
                         console.log('✅ User has paid subscription - granting access');
-                                        // Update Firestore cache (with error handling)
-                try {
-                    const userDocRef = doc(db, 'users', user.uid);
-                    await setDoc(userDocRef, {
-                        subscribed: true,
-                        paymentConfirmed: true,
-                        lastChecked: new Date(),
-                        stripeStatus: result.status,
-                        cancelAtPeriodEnd: result.cancelAtPeriodEnd
-                    }, { merge: true });
-                    console.log('✅ Firestore cache updated successfully');
-                } catch (firestoreError) {
-                    console.warn('⚠️ Firestore update failed, but continuing:', firestoreError);
-                    // Continue even if Firestore fails
-                }
+                        // Update Firestore cache (with error handling)
+                        try {
+                            const userDocRef = doc(db, 'users', user.uid);
+                            await setDoc(userDocRef, {
+                                subscribed: true,
+                                paymentConfirmed: true,
+                                lastChecked: new Date(),
+                                stripeStatus: result.status,
+                                cancelAtPeriodEnd: result.cancelAtPeriodEnd
+                            }, { merge: true });
+                            console.log('✅ Firestore cache updated successfully');
+                        } catch (firestoreError) {
+                            console.warn('⚠️ Firestore update failed, but continuing:', firestoreError);
+                            // Continue even if Firestore fails
+                        }
                         return true;
                     } else {
                         console.log('❌ User does not have paid subscription - denying access');
@@ -993,7 +1013,8 @@
         };
 
         // 1. Update the onAuthStateChanged logic to show locked state for non-subscribers
-        onAuthStateChanged(auth, async (user) => {
+        if (auth) {
+            onAuthStateChanged(auth, async (user) => {
             try {
                 const authControls = document.getElementById('auth-controls');
                 const recipeSection = document.getElementById('recipe-section');
@@ -1073,7 +1094,21 @@
                 } else {
                     console.log('🔍 AUTH STATE CHANGE - No user logged in');
                     // No user logged in - show landing page
-                    authControls.innerHTML = `<button class="cta-button login-btn" onclick="signInWithGoogle()">Sign In with Google</button>`;
+                    authControls.innerHTML = `<button class="cta-button login-btn" id="google-signin-btn">Sign In with Google</button>`;
+                    
+                    // Add event listener to the new button
+                    const newGoogleSignInBtn = document.getElementById('google-signin-btn');
+                    if (newGoogleSignInBtn) {
+                        newGoogleSignInBtn.addEventListener('click', () => {
+                            if (window.signInWithGoogle) {
+                                window.signInWithGoogle();
+                            } else {
+                                console.error('❌ signInWithGoogle function not available');
+                                alert('Sign-in function not available. Please refresh the page.');
+                            }
+                        });
+                    }
+                    
                     recipeSection.style.display = 'none';
                     homeSection.style.display = 'block';
                     featuresSection.style.display = 'block';
@@ -1090,6 +1125,9 @@
                 }
             }
         });
+        } else {
+            console.error('❌ Firebase auth not available - cannot set up auth state listener');
+        }
 
         // AUTOMATIC PAYMENT DETECTION ON PAGE LOAD
         document.addEventListener('DOMContentLoaded', function() {
@@ -1434,7 +1472,7 @@
                 // Use a more reliable API key or fallback to demo data
                 const apiKey = '0bf784244ef74e47bb54de046d7da861';
                 
-                // Improve search query to be more specific
+                // Improve search query to be more flexible
                 let searchQuery = protein.toLowerCase();
                 
                 // Add common pasta types if user mentions pasta
@@ -1442,15 +1480,23 @@
                     // Add popular pasta sauce types to the search
                     const pastaSauces = ['pesto', 'vodka', 'alfredo', 'marinara', 'carbonara', 'bolognese', 'aglio e olio'];
                     const randomSauce = pastaSauces[Math.floor(Math.random() * pastaSauces.length)];
-                    searchQuery = `${searchQuery} ${randomSauce} pasta`;
+                    searchQuery = `${searchQuery} ${randomSauce}`;
                 }
                 
-                // Make the search more specific by adding cooking method
-                const cookingMethods = ['grilled', 'baked', 'pan-fried', 'roasted'];
+                // Make the search more flexible by trying different approaches
+                const cookingMethods = ['grilled', 'baked', 'pan-fried', 'roasted', 'sauteed'];
                 const randomMethod = cookingMethods[Math.floor(Math.random() * cookingMethods.length)];
                 
-                // Build a more specific search query
-                const specificQuery = `${randomMethod} ${searchQuery}`;
+                // Try multiple search strategies
+                const searchQueries = [
+                    searchQuery, // Original query
+                    `${randomMethod} ${searchQuery}`, // With cooking method
+                    `${searchQuery} recipe`, // With "recipe" keyword
+                    `${searchQuery} dish` // With "dish" keyword
+                ];
+                
+                // Use the first query initially, but we can fall back to others if needed
+                const specificQuery = searchQueries[0];
                 
                 const url = `https://api.spoonacular.com/recipes/complexSearch?apiKey=${apiKey}&maxCalories=${calories}&number=25&addRecipeInformation=true&addRecipeNutrition=true&instructionsRequired=true&fillIngredients=true&query=${encodeURIComponent(specificQuery)}&sort=relevance`;
                 
@@ -1473,6 +1519,33 @@
                 
                 recipes = data.results || [];
                 currentIndex = 0;
+                
+                // If no results, try alternative search queries
+                if (recipes.length === 0 && searchQueries.length > 1) {
+                    console.log('🔍 No results with first query, trying alternatives...');
+                    
+                    for (let i = 1; i < searchQueries.length; i++) {
+                        const alternativeQuery = searchQueries[i];
+                        console.log(`🔍 Trying alternative query ${i}: ${alternativeQuery}`);
+                        
+                        const alternativeUrl = `https://api.spoonacular.com/recipes/complexSearch?apiKey=${apiKey}&maxCalories=${calories}&number=25&addRecipeInformation=true&addRecipeNutrition=true&instructionsRequired=true&fillIngredients=true&query=${encodeURIComponent(alternativeQuery)}&sort=relevance`;
+                        
+                        try {
+                            const altResponse = await fetch(alternativeUrl);
+                            if (altResponse.ok) {
+                                const altData = await altResponse.json();
+                                if (altData.results && altData.results.length > 0) {
+                                    console.log(`✅ Found ${altData.results.length} recipes with alternative query: ${alternativeQuery}`);
+                                    recipes = altData.results;
+                                    currentIndex = 0;
+                                    break;
+                                }
+                            }
+                        } catch (altError) {
+                            console.log(`❌ Alternative query ${i} failed:`, altError);
+                        }
+                    }
+                }
                 
                 if (recipes.length === 0) {
                     resultsDiv.innerHTML = `
@@ -1523,15 +1596,6 @@
                     }
                 } catch (demoError) {
                     console.error('❌ Demo recipe generation also failed:', demoError);
-                }
-            } else {
-                    resultsDiv.innerHTML = `
-                        <div style="text-align: center; padding: 3rem;">
-                            <h3>Error Generating Recipes</h3>
-                            <p>Please try again in a moment.</p>
-                            <p style="color: var(--text-light); font-size: 0.9rem;">Error: ${error.message}</p>
-                        </div>
-                    `;
                 }
             } finally {
                 // Reset button state
@@ -1772,6 +1836,41 @@
 
         // Additional JS for interactivity
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 DOM Content Loaded - Setting up event listeners');
+            
+            // Test basic functionality
+            console.log('🔍 Testing basic functionality...');
+            console.log('🔍 Auth controls element:', document.getElementById('auth-controls'));
+            console.log('🔍 Monthly button:', document.getElementById('monthly-subscribe'));
+            console.log('🔍 Annual button:', document.getElementById('annual-subscribe'));
+            console.log('🔍 Google sign-in button:', document.getElementById('google-signin-btn'));
+            // Test button
+            const testButton = document.getElementById('test-button');
+            if (testButton) {
+                testButton.addEventListener('click', () => {
+                    console.log('✅ Test button clicked - JavaScript is working!');
+                    alert('JavaScript is working! Firebase status: ' + (auth ? 'Available' : 'Not available'));
+                });
+                console.log('✅ Test button event listener added');
+            }
+            
+            // Google sign-in button
+            const googleSignInBtn = document.getElementById('google-signin-btn');
+            if (googleSignInBtn) {
+                googleSignInBtn.addEventListener('click', () => {
+                    console.log('🔄 Google sign-in button clicked');
+                    if (window.signInWithGoogle) {
+                        window.signInWithGoogle();
+                    } else {
+                        console.error('❌ signInWithGoogle function not available');
+                        alert('Sign-in function not available. Please refresh the page.');
+                    }
+                });
+                console.log('✅ Google sign-in button event listener added');
+            } else {
+                console.warn('⚠️ Google sign-in button not found');
+            }
+            
             // Mobile menu toggle
             const toggle = document.getElementById('mobile-menu-toggle');
             const menu = document.getElementById('mobile-nav');
@@ -1818,6 +1917,13 @@
                     e.preventDefault();
                     console.log('🔄 Monthly subscribe button clicked');
                     
+                    // Check if Firebase is available
+                    if (!auth) {
+                        console.error('❌ Firebase auth not available');
+                        alert('Authentication not available. Please refresh the page.');
+                        return;
+                    }
+                    
                     try {
                         let user = auth.currentUser;
                         if (!user) {
@@ -1844,7 +1950,9 @@
                             
                             // User not subscribed - open Whop checkout
                             console.log('💳 Opening Whop checkout for monthly plan');
-                            const whopUrl = 'https://whop.com/checkout/plan_QAyjF6Q2hnSOe?d2c=true&email=' + encodeURIComponent(user.email);
+                            const successUrl = window.location.origin + '/?payment=success';
+                            const cancelUrl = window.location.origin + '/?payment=cancelled';
+                            const whopUrl = 'https://whop.com/checkout/plan_QAyjF6Q2hnSOe?d2c=true&email=' + encodeURIComponent(user.email) + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
                             
                             console.log('🔗 Whop URL:', whopUrl);
                             const popup = window.open(whopUrl, 'whop-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
@@ -1852,9 +1960,9 @@
                             if (!popup || popup.closed || typeof popup.closed == 'undefined') {
                                 console.log('❌ Popup blocked, redirecting');
                                 alert('Please allow popups for this site to complete your subscription.');
-                                window.location.href = stripeUrl;
+                                window.location.href = whopUrl;
                             } else {
-                                console.log('✅ Stripe popup opened successfully');
+                                console.log('✅ Whop popup opened successfully');
                             }
                         } else {
                             console.log('❌ Failed to authenticate user');
@@ -1872,6 +1980,13 @@
                 annualButton.addEventListener('click', async (e) => {
                     e.preventDefault();
                     console.log('🔄 Annual subscribe button clicked');
+                    
+                    // Check if Firebase is available
+                    if (!auth) {
+                        console.error('❌ Firebase auth not available');
+                        alert('Authentication not available. Please refresh the page.');
+                        return;
+                    }
                     
                     try {
                         let user = auth.currentUser;
@@ -1899,7 +2014,9 @@
                             
                             // User not subscribed - open Whop checkout
                             console.log('💳 Opening Whop checkout for annual plan');
-                            const whopUrl = 'https://whop.com/checkout/plan_nbdGYrSmUo2GH?d2c=true&email=' + encodeURIComponent(user.email);
+                            const successUrl = window.location.origin + '/?payment=success';
+                            const cancelUrl = window.location.origin + '/?payment=cancelled';
+                            const whopUrl = 'https://whop.com/checkout/plan_nbdGYrSmUo2GH?d2c=true&email=' + encodeURIComponent(user.email) + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
                             
                             console.log('🔗 Whop URL:', whopUrl);
                             const popup = window.open(whopUrl, 'whop-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
@@ -1907,9 +2024,9 @@
                             if (!popup || popup.closed || typeof popup.closed == 'undefined') {
                                 console.log('❌ Popup blocked, redirecting');
                                 alert('Please allow popups for this site to complete your subscription.');
-                                window.location.href = stripeUrl;
+                                window.location.href = whopUrl;
                             } else {
-                                console.log('✅ Stripe popup opened successfully');
+                                console.log('✅ Whop popup opened successfully');
                             }
                         } else {
                             console.log('❌ Failed to authenticate user');
@@ -2021,7 +2138,8 @@
         });
 
         // Authentication Functions
-        window.signInWithGoogle = async function() {
+        if (auth) {
+            window.signInWithGoogle = async function() {
             try {
                 console.log('🔄 Starting Google sign-in...');
                 console.log('📍 Current domain:', window.location.hostname);
@@ -2059,17 +2177,29 @@
                 throw error;
             }
         };
+        } else {
+            console.error('❌ Firebase auth not available - cannot define signInWithGoogle function');
+            window.signInWithGoogle = async function() {
+                alert('Authentication not available. Please refresh the page.');
+            };
+        }
 
-        window.signOutUser = async function() {
-            try {
-                console.log('Signing out user...');
-                await signOut(auth);
-                console.log('User signed out successfully');
-            } catch (error) {
-                console.error('Sign-out error:', error);
-                alert('Sign-out failed. Please try again.');
-            }
-        };
+        if (auth) {
+            window.signOutUser = async function() {
+                try {
+                    console.log('Signing out user...');
+                    await signOut(auth);
+                    console.log('User signed out successfully');
+                } catch (error) {
+                    console.error('Sign-out error:', error);
+                    alert('Sign-out failed. Please try again.');
+                }
+            };
+        } else {
+            window.signOutUser = async function() {
+                alert('Authentication not available. Please refresh the page.');
+            };
+        }
 
         // Stripe redirect functions
         window.redirectToStripe = async function(plan) {
