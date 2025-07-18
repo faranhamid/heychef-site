@@ -89,6 +89,24 @@ app.post('/api/subscription-status', async (req, res) => {
             return res.status(400).json({ error: 'Email is required' });
         }
 
+        // Whitelist for premium users (temporary solution)
+        const premiumUsers = [
+            'trxllmontana@gmail.com',
+            'noodles15r@gmail.com',
+            'juniorpirani23@gmail.com',
+            'faran.hamid.work@gmail.com'
+        ];
+
+        if (premiumUsers.includes(email.toLowerCase())) {
+            console.log('✅ Backend: User is in premium whitelist - granting access');
+            return res.json({
+                subscribed: true,
+                paymentConfirmed: true,
+                status: 'active',
+                provider: 'whitelist'
+            });
+        }
+
         // Check Whop API for user subscription
         try {
             console.log('🔍 Backend: Checking Whop API for user:', email);
