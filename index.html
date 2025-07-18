@@ -417,8 +417,10 @@
                                    customerId ||
                                    document.referrer.includes('stripe.com') ||
                                    document.referrer.includes('checkout.stripe.com') ||
+                                   document.referrer.includes('whop.com') ||
                                    window.location.href.includes('stripe.com') ||
                                    window.location.href.includes('checkout.stripe.com') ||
+                                   window.location.href.includes('whop.com') ||
                                    sessionStorage.getItem('paymentSuccess') === 'true';
             
             if (isPaymentSuccess) {
@@ -1153,7 +1155,9 @@
                 paymentIntent || 
                 customerId ||
                 document.referrer.includes('stripe.com') ||
-                window.location.href.includes('stripe.com')) {
+                document.referrer.includes('whop.com') ||
+                window.location.href.includes('stripe.com') ||
+                window.location.href.includes('whop.com')) {
                 
                 console.log('🎉 PAYMENT SUCCESS DETECTED ON PAGE LOAD');
                 sessionStorage.setItem('paymentSuccess', 'true');
@@ -1301,6 +1305,19 @@
                 alert('Premium access granted! You should now have access to the recipe generator.');
             } else {
                 alert(`Debug Info:\nURL: ${window.location.href}\nPayment Status: ${paymentStatus}\nSession Storage: ${paymentSuccess}\nUser: ${user ? user.email : 'No user'}\nReferrer: ${document.referrer}`);
+            }
+        };
+
+        // Manual redirect from Whop community to HeyChef!
+        window.redirectFromWhop = function() {
+            console.log('🔄 Manual redirect from Whop community');
+            const user = auth.currentUser;
+            if (user) {
+                console.log('✅ User logged in, granting premium access');
+                grantPremiumAccess(user);
+            } else {
+                console.log('⏳ User not logged in, redirecting to HeyChef!');
+                window.location.href = 'https://heychef.menu/?payment=success&from_whop=true';
             }
         };
 
@@ -1950,9 +1967,9 @@
                             
                             // User not subscribed - open Whop checkout
                             console.log('💳 Opening Whop checkout for monthly plan');
-                            const successUrl = window.location.origin + '/?payment=success';
+                            const successUrl = window.location.origin + '/?payment=success&user=' + encodeURIComponent(user.email);
                             const cancelUrl = window.location.origin + '/?payment=cancelled';
-                            const whopUrl = 'https://whop.com/checkout/plan_QAyjF6Q2hnSOe?d2c=true&email=' + encodeURIComponent(user.email) + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
+                            const whopUrl = 'https://whop.com/checkout/plan_QAyjF6Q2hnSOe?d2c=true&email=' + encodeURIComponent(user.email) + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl) + '&redirect_to_app=true';
                             
                             console.log('🔗 Whop URL:', whopUrl);
                             const popup = window.open(whopUrl, 'whop-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
@@ -2014,9 +2031,9 @@
                             
                             // User not subscribed - open Whop checkout
                             console.log('💳 Opening Whop checkout for annual plan');
-                            const successUrl = window.location.origin + '/?payment=success';
+                            const successUrl = window.location.origin + '/?payment=success&user=' + encodeURIComponent(user.email);
                             const cancelUrl = window.location.origin + '/?payment=cancelled';
-                            const whopUrl = 'https://whop.com/checkout/plan_nbdGYrSmUo2GH?d2c=true&email=' + encodeURIComponent(user.email) + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
+                            const whopUrl = 'https://whop.com/checkout/plan_nbdGYrSmUo2GH?d2c=true&email=' + encodeURIComponent(user.email) + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl) + '&redirect_to_app=true';
                             
                             console.log('🔗 Whop URL:', whopUrl);
                             const popup = window.open(whopUrl, 'whop-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
