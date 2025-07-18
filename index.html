@@ -1428,6 +1428,9 @@
             `;
 
             try {
+                console.log('🚀 Starting recipe generation...');
+                console.log('📊 Input:', { calories, protein });
+                
                 // Use a more reliable API key or fallback to demo data
                 const apiKey = '0bf784244ef74e47bb54de046d7da861';
                 
@@ -1454,12 +1457,15 @@
                 console.log('Fetching recipes from:', url);
                 const response = await fetch(url);
                 
+                console.log('📡 API Response status:', response.status);
+                
                 if (!response.ok) {
+                    console.error('❌ API Error:', response.status, response.statusText);
                     throw new Error(`API Error: ${response.status} ${response.statusText}`);
                 }
                 
                 const data = await response.json();
-                console.log('API Response:', data);
+                console.log('📡 API Response data:', data);
                 
                 if (data.error) {
                     throw new Error(data.error);
@@ -1483,21 +1489,42 @@
                 displayRecipe();
                 
             } catch (error) {
-                console.error('Recipe generation error:', error);
+                console.error('❌ Recipe generation error:', error);
+                
+                // Show error message to user
+                resultsDiv.innerHTML = `
+                    <div style="text-align: center; padding: 3rem;">
+                        <h3 style="color: #ef4444;">Recipe Generation Failed</h3>
+                        <p>Sorry, we couldn't generate recipes right now.</p>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 1rem;">Error: ${error.message}</p>
+                        <button class="cta-button" onclick="generateRecipes()" style="margin-top: 1rem;">Try Again</button>
+                    </div>
+                `;
+                
+                // Reset button state
+                if (generateBtn) {
+                    generateBtn.textContent = 'Generate Recipes';
+                    generateBtn.disabled = false;
+                }
                 
                 // Fallback to demo recipes if API fails
-                recipes = generateDemoRecipes(calories, protein);
-                currentIndex = 0;
-                
-                if (recipes.length > 0) {
-                    resultsDiv.innerHTML = `
-                        <div style="text-align: center; padding: 2rem; background: #fef3c7; border-radius: 12px; margin-bottom: 2rem;">
-                            <h3>Demo Mode</h3>
-                            <p>API temporarily unavailable. Showing demo recipes for your search.</p>
-                        </div>
-                    `;
-                    displayRecipe();
-                } else {
+                try {
+                    recipes = generateDemoRecipes(calories, protein);
+                    currentIndex = 0;
+                    
+                    if (recipes.length > 0) {
+                        resultsDiv.innerHTML = `
+                            <div style="text-align: center; padding: 2rem; background: #fef3c7; border-radius: 12px; margin-bottom: 2rem;">
+                                <h3>Demo Mode</h3>
+                                <p>API temporarily unavailable. Showing demo recipes for your search.</p>
+                            </div>
+                        `;
+                        displayRecipe();
+                    }
+                } catch (demoError) {
+                    console.error('❌ Demo recipe generation also failed:', demoError);
+                }
+            } else {
                     resultsDiv.innerHTML = `
                         <div style="text-align: center; padding: 3rem;">
                             <h3>Error Generating Recipes</h3>
