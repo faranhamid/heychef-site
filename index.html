@@ -639,24 +639,59 @@
             document.getElementById('user-dropdown-menu').classList.remove('active');
         };
 
-        window.showSubscriptionDetails = function() {
+        window.showSubscriptionDetails = async function() {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('No user logged in');
+                return;
+            }
+
+            // Check actual subscription status
+            const subscribed = await window.isSubscribed(user);
+            
             const modalText = document.getElementById('modal-text');
-            modalText.innerHTML = `
-                <div style="text-align: center; padding: 2rem;">
-                    <h2 style="color: var(--primary); margin-bottom: 1rem;">💳 Subscription Details</h2>
-                    <div style="text-align: left; max-width: 400px; margin: 0 auto;">
-                        <p><strong>Status:</strong> <span style="color: var(--accent);">Active</span></p>
-                        <p><strong>Plan:</strong> Premium Access</p>
-                        <p><strong>Features:</strong></p>
-                        <ul style="margin-left: 1rem;">
-                            <li>Unlimited recipe generations</li>
-                            <li>Personalized AI recommendations</li>
-                            <li>Detailed nutritional analysis</li>
-                            <li>Priority customer support</li>
-                        </ul>
+            
+            if (subscribed) {
+                modalText.innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <h2 style="color: var(--primary); margin-bottom: 1rem;">💳 Subscription Details</h2>
+                        <div style="text-align: left; max-width: 400px; margin: 0 auto;">
+                            <p><strong>Status:</strong> <span style="color: #10b981;">Active</span></p>
+                            <p><strong>Plan:</strong> Premium Access</p>
+                            <p><strong>Features:</strong></p>
+                            <ul style="margin-left: 1rem;">
+                                <li>Unlimited recipe generations</li>
+                                <li>Personalized AI recommendations</li>
+                                <li>Detailed nutritional analysis</li>
+                                <li>Priority customer support</li>
+                            </ul>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            } else {
+                modalText.innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <h2 style="color: var(--primary); margin-bottom: 1rem;">💳 Subscription Details</h2>
+                        <div style="text-align: left; max-width: 400px; margin: 0 auto;">
+                            <p><strong>Status:</strong> <span style="color: #6b7280;">Free</span></p>
+                            <p><strong>Plan:</strong> Free Account</p>
+                            <p><strong>Current Access:</strong></p>
+                            <ul style="margin-left: 1rem;">
+                                <li>Basic account features</li>
+                                <li>Limited recipe access</li>
+                            </ul>
+                            <div style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+                                <p style="color: #0369a1; margin: 0;"><strong>Upgrade to Premium:</strong></p>
+                                <p style="color: #0369a1; margin: 0.5rem 0 0 0;">Get unlimited access to our AI recipe generator and all premium features!</p>
+                            </div>
+                        </div>
+                        <div style="margin-top: 2rem;">
+                            <button class="cta-button" onclick="showUpgradePrompt()">Upgrade to Premium</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
             document.getElementById('modal').style.display = 'flex';
             document.getElementById('user-dropdown-menu').classList.remove('active');
         };
