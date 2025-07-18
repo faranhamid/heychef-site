@@ -1224,10 +1224,10 @@
                     <h2 style="color:var(--primary); margin-bottom:1rem;">Upgrade to Premium</h2>
                     <p style="font-size:1.1rem; margin-bottom:1.5rem;">Unlock unlimited AI recipe generations, nutrition info, and more. Choose a plan to get started!</p>
                     <div style="display:flex; flex-direction:column; gap:1rem; align-items:center;">
-                        <button class="cta-button" onclick="redirectToStripe('monthly')" style="width:220px;">Monthly - $9.99/mo</button>
-                        <button class="cta-button" onclick="redirectToStripe('annual')" style="width:220px;">Annual - $99.99/yr <span style='color:var(--accent);'>(Save 16%)</span></button>
+                        <button class="cta-button" onclick="redirectToWhop('monthly')" style="width:220px;">Monthly - $9.99/mo</button>
+                        <button class="cta-button" onclick="redirectToWhop('annual')" style="width:220px;">Annual - $99.99/yr <span style='color:var(--accent);'>(Save 16%)</span></button>
                     </div>
-                    <div style="margin-top:2rem; color:var(--text-light); font-size:0.95rem;">Cancel anytime. Secure payment via Stripe.</div>
+                                            <div style="margin-top:2rem; color:var(--text-light); font-size:0.95rem;">Cancel anytime. Secure payment via Whop.</div>
                     <div style="margin-top:1rem; padding:1rem; background:#f3f4f6; border-radius:8px;">
                         <p style="font-size:0.9rem; color:#6b7280; margin-bottom:0.5rem;">Already paid? Click below to refresh your status:</p>
                         <button class="cta-button" onclick="refreshSubscriptionStatus()" style="background:#6b7280; font-size:0.9rem; padding:0.5rem 1rem;">Refresh Subscription Status</button>
@@ -1371,22 +1371,20 @@
             }
         };
 
-        // 4. Redirect to Stripe checkout
-        window.redirectToStripe = function(plan) {
+        // 4. Redirect to Whop checkout
+        window.redirectToWhop = function(plan) {
             const user = auth.currentUser;
             if (!user) {
                 alert('Please sign in first.');
                 return;
             }
-            const successUrl = window.location.origin + '/?payment=success';
-            const cancelUrl = window.location.origin + '/?payment=cancelled';
-            let stripeUrl = '';
+            let whopUrl = '';
             if (plan === 'monthly') {
-                stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
+                whopUrl = 'https://whop.com/checkout/plan_QAyjF6Q2hnSOe?d2c=true&email=' + encodeURIComponent(user.email);
             } else {
-                stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
+                whopUrl = 'https://whop.com/checkout/plan_nbdGYrSmUo2GH?d2c=true&email=' + encodeURIComponent(user.email);
             }
-            window.location.href = stripeUrl;
+            window.location.href = whopUrl;
         };
 
         // 5. If a non-subscribed user tries to generate recipes, show locked modal
@@ -1817,14 +1815,12 @@
                                 console.error('❌ Error checking subscription:', error);
                             }
                             
-                            // User not subscribed - open Stripe checkout
-                            console.log('💳 Opening Stripe checkout for monthly plan');
-                            const successUrl = window.location.origin + '/?payment=success';
-                            const cancelUrl = window.location.origin + '/?payment=cancelled';
-                            const stripeUrl = 'https://buy.stripe.com/aFa3cw9GAczd2Sb6FTdQQ00?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
+                            // User not subscribed - open Whop checkout
+                            console.log('💳 Opening Whop checkout for monthly plan');
+                            const whopUrl = 'https://whop.com/checkout/plan_QAyjF6Q2hnSOe?d2c=true&email=' + encodeURIComponent(user.email);
                             
-                            console.log('🔗 Stripe URL:', stripeUrl);
-                            const popup = window.open(stripeUrl, 'stripe-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
+                            console.log('🔗 Whop URL:', whopUrl);
+                            const popup = window.open(whopUrl, 'whop-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
                             
                             if (!popup || popup.closed || typeof popup.closed == 'undefined') {
                                 console.log('❌ Popup blocked, redirecting');
@@ -1874,14 +1870,12 @@
                                 console.error('❌ Error checking subscription:', error);
                             }
                             
-                            // User not subscribed - open Stripe checkout
-                            console.log('💳 Opening Stripe checkout for annual plan');
-                            const successUrl = window.location.origin + '/?payment=success';
-                            const cancelUrl = window.location.origin + '/?payment=cancelled';
-                            const stripeUrl = 'https://buy.stripe.com/fZu8wQg4Y9n1dwP7JXdQQ01?prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + user.uid + '&success_url=' + encodeURIComponent(successUrl) + '&cancel_url=' + encodeURIComponent(cancelUrl);
+                            // User not subscribed - open Whop checkout
+                            console.log('💳 Opening Whop checkout for annual plan');
+                            const whopUrl = 'https://whop.com/checkout/plan_nbdGYrSmUo2GH?d2c=true&email=' + encodeURIComponent(user.email);
                             
-                            console.log('🔗 Stripe URL:', stripeUrl);
-                            const popup = window.open(stripeUrl, 'stripe-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
+                            console.log('🔗 Whop URL:', whopUrl);
+                            const popup = window.open(whopUrl, 'whop-checkout', 'width=500,height=700,scrollbars=yes,resizable=yes');
                             
                             if (!popup || popup.closed || typeof popup.closed == 'undefined') {
                                 console.log('❌ Popup blocked, redirecting');

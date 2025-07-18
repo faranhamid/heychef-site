@@ -1,8 +1,11 @@
 const express = require('express');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const cors = require('cors');
 const bodyParser = require('body-parser');
 require('dotenv').config();
+
+// Whop API configuration
+const WHOP_API_KEY = 'Xj86QOr3N_9DVUuNm2Ezlh2YrHuwmYJdqAMCM4n299E';
+const WHOP_API_BASE = 'https://api.whop.com/api/v2';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -79,89 +82,80 @@ app.post('/api/subscription-status', async (req, res) => {
     try {
         const { email } = req.body;
         
-        console.log('🔍 Backend: Checking subscription for email:', email);
+        console.log('🔍 Backend: Checking Whop subscription for email:', email);
         
         if (!email) {
             console.log('❌ Backend: No email provided');
             return res.status(400).json({ error: 'Email is required' });
         }
 
-        // Find the customer in Stripe by email
-        console.log('🔍 Backend: Searching for Stripe customer...');
-        const customers = await stripe.customers.list({
-            email: email,
-            limit: 1
-        });
+        // Check Whop API for user subscription
+        try {
+            console.log('🔍 Backend: Checking Whop API for user:', email);
+            
+            // First, get the user from Whop API
+            const userResponse = await fetch(`${WHOP_API_BASE}/users?email=${encodeURIComponent(email)}`, {
+                headers: {
+                    'Authorization': `Bearer ${WHOP_API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            });
 
-        console.log('🔍 Backend: Found customers:', customers.data.length);
-
-        if (customers.data.length === 0) {
-            console.log('❌ Backend: No Stripe customer found for email:', email);
-            return res.json({ subscribed: false, paymentConfirmed: false });
-        }
-
-        const customer = customers.data[0];
-        console.log('🔍 Backend: Found customer ID:', customer.id);
-
-        // Get active subscriptions
-        console.log('🔍 Backend: Checking for active subscriptions...');
-        const subscriptions = await stripe.subscriptions.list({
-            customer: customer.id,
-            status: 'active'
-        });
-
-        console.log('🔍 Backend: Found active subscriptions:', subscriptions.data.length);
-
-        if (subscriptions.data.length === 0) {
-            console.log('❌ Backend: No active subscriptions found');
-            return res.json({ subscribed: false, paymentConfirmed: false });
-        }
-
-        const subscription = subscriptions.data[0];
-        console.log('🔍 Backend: Found subscription ID:', subscription.id);
-        
-        // Check if payment was actually made by looking at invoices
-        console.log('🔍 Backend: Checking for paid invoices...');
-        const invoices = await stripe.invoices.list({
-            customer: customer.id,
-            subscription: subscription.id,
-            status: 'paid',
-            limit: 1
-        });
-
-        console.log('🔍 Backend: Found paid invoices:', invoices.data.length);
-
-        // For trial subscriptions, check if they have an active subscription
-        // For paid subscriptions, check for paid invoices
-        let paymentConfirmed = false;
-        
-        if (subscription.status === 'active') {
-            if (subscription.trial_end && subscription.trial_end > Math.floor(Date.now() / 1000)) {
-                // User is in trial period - consider them subscribed
-                console.log('🔍 Backend: User is in trial period - granting access');
-                paymentConfirmed = true;
-            } else if (invoices.data.length > 0) {
-                // User has paid invoices - consider them subscribed
-                console.log('🔍 Backend: User has paid invoices - granting access');
-                paymentConfirmed = true;
-            } else {
-                // Check if subscription is active (might be a free trial that converted)
-                console.log('🔍 Backend: Active subscription found - granting access');
-                paymentConfirmed = true;
+            if (!userResponse.ok) {
+                console.log('❌ Backend: Whop API error:', userResponse.status);
+                return res.json({ subscribed: false, paymentConfirmed: false });
             }
+
+            const userData = await userResponse.json();
+            console.log('🔍 Backend: Whop user data:', userData);
+
+            if (!userData.data || userData.data.length === 0) {
+                console.log('❌ Backend: No Whop user found for email:', email);
+                return res.json({ subscribed: false, paymentConfirmed: false });
+            }
+
+            const user = userData.data[0];
+            console.log('🔍 Backend: Found Whop user:', user.id);
+
+            // Check if user has active access to your product
+            const accessResponse = await fetch(`${WHOP_API_BASE}/users/${user.id}/access`, {
+                headers: {
+                    'Authorization': `Bearer ${WHOP_API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!accessResponse.ok) {
+                console.log('❌ Backend: Whop access API error:', accessResponse.status);
+                return res.json({ subscribed: false, paymentConfirmed: false });
+            }
+
+            const accessData = await accessResponse.json();
+            console.log('🔍 Backend: Whop access data:', accessData);
+
+            // Check if user has active access to HeyChef
+            const hasActiveAccess = accessData.data && accessData.data.some(access => 
+                access.status === 'active' && 
+                (access.product_name === 'HeyChef!' || access.product_id)
+            );
+
+            if (hasActiveAccess) {
+                console.log('✅ Backend: User has active Whop access - granting access');
+                return res.json({
+                    subscribed: true,
+                    paymentConfirmed: true,
+                    status: 'active',
+                    provider: 'whop'
+                });
+            } else {
+                console.log('❌ Backend: User does not have active Whop access');
+                return res.json({ subscribed: false, paymentConfirmed: false });
+            }
+
+        } catch (whopError) {
+            console.error('❌ Backend: Error checking Whop subscription:', whopError);
+            return res.json({ subscribed: false, paymentConfirmed: false });
         }
-        
-        const result = {
-            subscribed: paymentConfirmed, // Only true if payment was made
-            paymentConfirmed: paymentConfirmed,
-            subscriptionId: subscription.id,
-            status: subscription.status,
-            currentPeriodEnd: subscription.current_period_end,
-            cancelAtPeriodEnd: subscription.cancel_at_period_end
-        };
-        
-        console.log('🔍 Backend: Final result:', result);
-        res.json(result);
 
     } catch (error) {
         console.error('❌ Backend: Error checking subscription status:', error);
