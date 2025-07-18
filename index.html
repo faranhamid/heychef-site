@@ -411,6 +411,11 @@
             });
             
             // BULLETPROOF PAYMENT SUCCESS DETECTION
+            const whopAccess = sessionStorage.getItem('whopAccess');
+            const whopAccessTime = sessionStorage.getItem('whopAccessTime');
+            const hasRecentWhopAccess = whopAccess === 'true' && whopAccessTime && 
+                                       (Date.now() - parseInt(whopAccessTime)) < (60 * 60 * 1000); // Within 1 hour
+            
             const isPaymentSuccess = paymentStatus === 'success' || 
                                    sessionId || 
                                    paymentIntent || 
@@ -421,6 +426,8 @@
                                    window.location.href.includes('stripe.com') ||
                                    window.location.href.includes('checkout.stripe.com') ||
                                    window.location.href.includes('whop.com') ||
+                                   window.location.href.includes('whop_access=true') ||
+                                   hasRecentWhopAccess ||
                                    sessionStorage.getItem('paymentSuccess') === 'true';
             
             if (isPaymentSuccess) {
@@ -1269,10 +1276,14 @@
                         <button class="cta-button" onclick="redirectToWhop('monthly')" style="width:220px;">Monthly - $9.99/mo</button>
                         <button class="cta-button" onclick="redirectToWhop('annual')" style="width:220px;">Annual - $99.99/yr <span style='color:var(--accent);'>(Save 16%)</span></button>
                     </div>
-                                            <div style="margin-top:2rem; color:var(--text-light); font-size:0.95rem;">Cancel anytime. Secure payment via Whop.</div>
+                    <div style="margin-top:2rem; color:var(--text-light); font-size:0.95rem;">Cancel anytime. Secure payment via Whop.</div>
                     <div style="margin-top:1rem; padding:1rem; background:#f3f4f6; border-radius:8px;">
                         <p style="font-size:0.9rem; color:#6b7280; margin-bottom:0.5rem;">Already paid? Click below to refresh your status:</p>
                         <button class="cta-button" onclick="refreshSubscriptionStatus()" style="background:#6b7280; font-size:0.9rem; padding:0.5rem 1rem;">Refresh Subscription Status</button>
+                    </div>
+                    <div style="margin-top:1rem; padding:1rem; background:#fef3c7; border-radius:8px;">
+                        <p style="font-size:0.9rem; color:#92400e; margin-bottom:0.5rem;"><strong>Got redirected to Whop community?</strong></p>
+                        <p style="font-size:0.9rem; color:#92400e; margin-bottom:0.5rem;">Simply visit <a href="https://heychef.menu" style="color:#92400e; text-decoration:underline;">heychef.menu</a> to access your premium features!</p>
                     </div>
                 </div>
             `;
@@ -1320,6 +1331,16 @@
                 window.location.href = 'https://heychef.menu/?payment=success&from_whop=true';
             }
         };
+
+        // Auto-detect Whop community access and redirect
+        if (window.location.href.includes('whop.com') && window.location.href.includes('hey-chef')) {
+            console.log('🎯 Detected HeyChef! Whop community access - redirecting to main site');
+            // Store that user has access to Whop community
+            sessionStorage.setItem('whopAccess', 'true');
+            sessionStorage.setItem('whopAccessTime', Date.now().toString());
+            // Redirect to main HeyChef! site
+            window.location.href = 'https://heychef.menu/?payment=success&whop_access=true';
+        }
 
         // Force premium access for paid users
         window.forcePremiumAccess = function() {
