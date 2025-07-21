@@ -1552,7 +1552,10 @@
                     'italian', 'mexican', 'chinese', 'japanese', 'indian', 'thai', 'mediterranean', 
                     'french', 'spanish', 'greek', 'lebanese', 'moroccan', 'ethiopian', 'korean',
                     'vietnamese', 'filipino', 'brazilian', 'peruvian', 'caribbean', 'african',
-                    'middle eastern', 'turkish', 'persian', 'russian', 'german', 'polish'
+                    'middle eastern', 'turkish', 'persian', 'russian', 'german', 'polish',
+                    'salvadoran', 'el salvador', 'central american', 'guatemalan', 'honduran', 
+                    'nicaraguan', 'costa rican', 'panamanian', 'belizean', 'latin american',
+                    'caribbean', 'jamaican', 'haitian', 'dominican', 'puerto rican', 'cuban'
                 ];
                 
                 // Add common pasta types if user mentions pasta
@@ -1561,6 +1564,11 @@
                     const pastaSauces = ['pesto', 'vodka', 'alfredo', 'marinara', 'carbonara', 'bolognese', 'aglio e olio'];
                     const randomSauce = pastaSauces[Math.floor(Math.random() * pastaSauces.length)];
                     searchQuery = `${searchQuery} ${randomSauce}`;
+                }
+                
+                // Add Salvadoran cuisine keywords if user mentions pupusas
+                if (searchQuery.includes('pupusa') || searchQuery.includes('pupusas')) {
+                    searchQuery = 'salvadoran pupusas traditional';
                 }
                 
                 // Make the search more flexible by trying different approaches
@@ -1698,6 +1706,78 @@
             
             // Global cuisine recipes based on the search term
             const globalRecipes = [
+                {
+                    title: `Salvadoran ${protein} Pupusas`,
+                    image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?ixlib=rb-40.3&auto=format&fit=crop&w=800&q=80',
+                    nutrition: {
+                        nutrients: [
+                            { name: 'Calories', amount: parseInt(calories) * 0.85 },
+                            { name: 'Protein', amount: 28 },
+                            { name: 'Fat', amount: 16 },
+                            { name: 'Carbohydrates', amount: 48 },
+                            { name: 'Sugar', amount: 3 },
+                            { name: 'Fiber', amount: 6 }
+                        ]
+                    },
+                    extendedIngredients: [
+                        { original: `1 lb ${protein}, ground or finely chopped` },
+                        { original: '2 cups masa harina (corn flour)' },
+                        { original: '1 1/2 cups warm water' },
+                        { original: '1/2 cup refried beans' },
+                        { original: '1/2 cup queso fresco, crumbled' },
+                        { original: '1 onion, finely diced' },
+                        { original: '2 cloves garlic, minced' },
+                        { original: '1 tsp cumin' },
+                        { original: 'Salt and pepper to taste' },
+                        { original: 'Curtido (pickled cabbage slaw) for serving' }
+                    ],
+                    analyzedInstructions: [{
+                        steps: [
+                            { step: `Season ${protein} with cumin, salt, and pepper. Cook until browned, then set aside.` },
+                            { step: 'Mix masa harina with warm water to form a dough. Let rest for 10 minutes.' },
+                            { step: 'Divide dough into 8 portions and form into balls.' },
+                            { step: 'Flatten each ball and add protein, beans, and cheese in the center.' },
+                            { step: 'Seal the edges and flatten into a disc about 1/4 inch thick.' },
+                            { step: 'Cook on a hot griddle for 3-4 minutes per side until golden brown.' },
+                            { step: 'Serve hot with curtido and salsa roja.' }
+                        ]
+                    }]
+                },
+                {
+                    title: `Central American ${protein} Tamales`,
+                    image: 'https://images.unsplash.com/photo-155118353bf91a1d81141xlib=rb-40.3&auto=format&fit=crop&w=800&q=80',
+                    nutrition: {
+                        nutrients: [
+                            { name: 'Calories', amount: parseInt(calories) * 0.9 },
+                            { name: 'Protein', amount: 32 },
+                            { name: 'Fat', amount: 20 },
+                            { name: 'Carbohydrates', amount: 42 },
+                            { name: 'Sugar', amount: 5 },
+                            { name: 'Fiber', amount: 8 }
+                        ]
+                    },
+                    extendedIngredients: [
+                        { original: `1 lb ${protein}, cooked and shredded` },
+                        { original: '2 cups masa harina' },
+                        { original: '1 cup chicken broth' },
+                        { original: '1/2 cup lard or vegetable shortening' },
+                        { original: '1 tsp baking powder' },
+                        { original: '1 tsp salt' },
+                        { original: 'Dried corn husks, soaked' },
+                        { original: '1/2 cup salsa verde' },
+                        { original: '1/4 cup olives, sliced' }
+                    ],
+                    analyzedInstructions: [{
+                        steps: [
+                            { step: `Cook ${protein} with spices until tender, then shred.` },
+                            { step: 'Mix masa harina with broth, lard, baking powder, and salt to form dough.' },
+                            { step: 'Spread masa on corn husks, add protein, salsa, and olives.' },
+                            { step: 'Fold husks to enclose filling and tie with string.' },
+                            { step: 'Steam tamales for 1-1.5 hours until masa is firm.' },
+                            { step: 'Serve hot with additional salsa and crema.' }
+                        ]
+                    }]
+                },
                 {
                     title: `Italian ${protein} with Herbs`,
                     image: 'https://images.unsplash.com/photo-1563379926898-54575a45d8?ixlib=rb-40.3&auto=format&fit=crop&w=800&q=80',
