@@ -1197,16 +1197,25 @@
                 document.referrer.includes('stripe.com') ||
                 document.referrer.includes('whop.com') ||
                 window.location.href.includes('stripe.com') ||
-                window.location.href.includes('whop.com')) {
+                window.location.href.includes('whop.com') ||
+                urlParams.get('from_whop') === 'true') {
                 
                 console.log('🎉 PAYMENT SUCCESS DETECTED ON PAGE LOAD');
                 sessionStorage.setItem('paymentSuccess', 'true');
                 sessionStorage.setItem('paymentTimestamp', Date.now().toString());
                 sessionStorage.setItem('paymentSessionId', sessionId || '');
                 sessionStorage.setItem('paymentIntent', paymentIntent || '');
+                sessionStorage.setItem('whopPayment', 'true');
                 
                 // Clear URL parameters
                 window.history.replaceState({}, document.title, window.location.pathname);
+                
+                // Show success message
+                if (paymentStatus === 'success') {
+                    setTimeout(() => {
+                        alert('🎉 Payment successful! Welcome to HeyChef! Premium. You now have access to unlimited AI recipe generation.');
+                    }, 1000);
+                }
             }
         });
 
@@ -1375,6 +1384,14 @@
             // Redirect to main HeyChef! site
             window.location.href = 'https://heychef.menu/?payment=success&whop_access=true';
         }
+        
+        // Auto-detect any Whop.com redirect and grant access
+        if (document.referrer.includes('whop.com') || window.location.href.includes('whop.com')) {
+            console.log('🎯 Detected Whop redirect - granting premium access');
+            sessionStorage.setItem('whopPayment', 'true');
+            sessionStorage.setItem('paymentSuccess', 'true');
+            sessionStorage.setItem('paymentTimestamp', Date.now().toString());
+        }
 
         // Force premium access for paid users
         window.forcePremiumAccess = function() {
@@ -1488,12 +1505,19 @@
                 alert('Please sign in first.');
                 return;
             }
+            
+            // Set up redirect URLs
+            const successUrl = encodeURIComponent('https://heychef.menu?payment=success&from_whop=true');
+            const cancelUrl = encodeURIComponent('https://heychef.menu?payment=cancelled&from_whop=true');
+            
             let whopUrl = '';
             if (plan === 'monthly') {
-                whopUrl = 'https://whop.com/checkout/plan_QAyjF6Q2hnSOe?d2c=true&email=' + encodeURIComponent(user.email);
+                whopUrl = `https://whop.com/checkout/plan_QAyjF6Q2hnSOe?d2c=true&email=${encodeURIComponent(user.email)}&success_url=${successUrl}&cancel_url=${cancelUrl}`;
             } else {
-                whopUrl = 'https://whop.com/checkout/plan_nbdGYrSmUo2GH?d2c=true&email=' + encodeURIComponent(user.email);
+                whopUrl = `https://whop.com/checkout/plan_nbdGYrSmUo2GH?d2c=true&email=${encodeURIComponent(user.email)}&success_url=${successUrl}&cancel_url=${cancelUrl}`;
             }
+            
+            console.log('🚀 Redirecting to Whop checkout:', whopUrl);
             window.location.href = whopUrl;
         };
 
