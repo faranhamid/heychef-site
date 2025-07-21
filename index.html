@@ -1544,8 +1544,16 @@
                 // Use a more reliable API key or fallback to demo data
                 const apiKey = '0bf784244ef74e47bb54de046d7da861';
                 
-                // Improve search query to be more flexible
+                // Improve search query to be more flexible and global
                 let searchQuery = protein.toLowerCase();
+                
+                // Global cuisine keywords to make searches more inclusive
+                const globalCuisines = [
+                    'italian', 'mexican', 'chinese', 'japanese', 'indian', 'thai', 'mediterranean', 
+                    'french', 'spanish', 'greek', 'lebanese', 'moroccan', 'ethiopian', 'korean',
+                    'vietnamese', 'filipino', 'brazilian', 'peruvian', 'caribbean', 'african',
+                    'middle eastern', 'turkish', 'persian', 'russian', 'german', 'polish'
+                ];
                 
                 // Add common pasta types if user mentions pasta
                 if (searchQuery.includes('pasta') || searchQuery.includes('noodle')) {
@@ -1556,15 +1564,20 @@
                 }
                 
                 // Make the search more flexible by trying different approaches
-                const cookingMethods = ['grilled', 'baked', 'pan-fried', 'roasted', 'sauteed'];
+                const cookingMethods = ['grilled', 'baked', 'pan-fried', 'roasted', 'sauteed', 'braised', 'steamed', 'stir-fried'];
                 const randomMethod = cookingMethods[Math.floor(Math.random() * cookingMethods.length)];
+                const randomCuisine = globalCuisines[Math.floor(Math.random() * globalCuisines.length)];
                 
-                // Try multiple search strategies
+                // Try multiple search strategies with global cuisine focus
                 const searchQueries = [
                     searchQuery, // Original query
                     `${randomMethod} ${searchQuery}`, // With cooking method
+                    `${searchQuery} ${randomCuisine}`, // With random global cuisine
                     `${searchQuery} recipe`, // With "recipe" keyword
-                    `${searchQuery} dish` // With "dish" keyword
+                    `${searchQuery} dish`, // With "dish" keyword
+                    `${randomCuisine} ${searchQuery}`, // Cuisine first
+                    `${searchQuery} traditional`, // Traditional preparation
+                    `${searchQuery} authentic` // Authentic preparation
                 ];
                 
                 // Use the first query initially, but we can fall back to others if needed
@@ -1678,10 +1691,151 @@
             }
         };
 
-        // Generate demo recipes as fallback with more pasta variety
+        // Generate demo recipes as fallback with global cuisine variety
         function generateDemoRecipes(calories, protein) {
             const searchTerm = protein.toLowerCase();
             const demoRecipes = [];
+            
+            // Global cuisine recipes based on the search term
+            const globalRecipes = [
+                {
+                    title: `Italian ${protein} with Herbs`,
+                    image: 'https://images.unsplash.com/photo-1563379926898-54575a45d8?ixlib=rb-40.3&auto=format&fit=crop&w=800&q=80',
+                    nutrition: {
+                        nutrients: [
+                            { name: 'Calories', amount: parseInt(calories) * 0.85 },
+                            { name: 'Protein', amount: 32 },
+                            { name: 'Fat', amount: 18 },
+                            { name: 'Carbohydrates', amount: 45 },
+                            { name: 'Sugar', amount: 6 },
+                            { name: 'Fiber', amount: 7 }
+                        ]
+                    },
+                    extendedIngredients: [
+                        { original: `1 lb ${protein}, diced` },
+                        { original: '2 tbsp olive oil' },
+                        { original: '3 cloves garlic, minced' },
+                        { original: '1/4 cup fresh basil, chopped' },
+                        { original: '1/4 cup fresh parsley, chopped' },
+                        { original: '1/2 cup cherry tomatoes' },
+                        { original: '1/4 cup parmesan cheese' },
+                        { original: 'Salt and pepper to taste' }
+                    ],
+                    analyzedInstructions: [{
+                        steps: [
+                            { step: `Season ${protein} with salt and pepper.` },
+                            { step: 'Heat olive oil in a large skillet over medium heat.' },
+                            { step: `Add ${protein} and cook until golden brown on all sides.` },
+                            { step: 'Add garlic and cook for 1 minute until fragrant.' },
+                            { step: 'Add tomatoes and herbs, cook for 2 minutes.' },
+                            { step: 'Garnish with parmesan cheese and serve hot.' }
+                        ]
+                    }]
+                },
+                {
+                    title: `Mexican ${protein} Tacos`,
+                    image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?ixlib=rb-40.3&auto=format&fit=crop&w=800&q=80',
+                    nutrition: {
+                        nutrients: [
+                            { name: 'Calories', amount: parseInt(calories) * 0.9 },
+                            { name: 'Protein', amount: 28 },
+                            { name: 'Fat', amount: 22 },
+                            { name: 'Carbohydrates', amount: 42 },
+                            { name: 'Sugar', amount: 8 },
+                            { name: 'Fiber', amount: 5 }
+                        ]
+                    },
+                    extendedIngredients: [
+                        { original: `1 lb ${protein}, sliced` },
+                        { original: '8 corn tortillas' },
+                        { original: '2 tbsp olive oil' },
+                        { original: '1 onion, diced' },
+                        { original: '2 cloves garlic, minced' },
+                        { original: '1 tsp cumin' },
+                        { original: '1 tsp chili powder' },
+                        { original: 'Fresh cilantro and lime for garnish' }
+                    ],
+                    analyzedInstructions: [{
+                        steps: [
+                            { step: `Season ${protein} with cumin, chili powder, salt, and pepper.` },
+                            { step: 'Heat oil in a skillet and cook protein until browned.' },
+                            { step: 'Add onion and garlic, cook until softened.' },
+                            { step: 'Warm tortillas in a dry pan.' },
+                            { step: 'Fill tortillas with protein mixture.' },
+                            { step: 'Garnish with cilantro and lime wedges.' }
+                        ]
+                    }]
+                },
+                {
+                    title: `Asian Stir-Fried ${protein}`,
+                    image: 'https://images.unsplash.com/photo-155118353bf91a1d81141xlib=rb-40.3&auto=format&fit=crop&w=800&q=80',
+                    nutrition: {
+                        nutrients: [
+                            { name: 'Calories', amount: parseInt(calories) * 0.95 },
+                            { name: 'Protein', amount: 30 },
+                            { name: 'Fat', amount: 25 },
+                            { name: 'Carbohydrates', amount: 38 },
+                            { name: 'Sugar', amount: 4 },
+                            { name: 'Fiber', amount: 3 }
+                        ]
+                    },
+                    extendedIngredients: [
+                        { original: `1 lb ${protein}, sliced` },
+                        { original: '2 tbsp vegetable oil' },
+                        { original: '2 tbsp soy sauce' },
+                        { original: '1 tbsp ginger, minced' },
+                        { original: '2 cloves garlic, minced' },
+                        { original: '1 bell pepper, sliced' },
+                        { original: '2 green onions, chopped' },
+                        { original: '1 tsp sesame oil' }
+                    ],
+                    analyzedInstructions: [{
+                        steps: [
+                            { step: `Marinate ${protein} in soy sauce for 10 minutes.` },
+                            { step: 'Heat oil in a wok or large skillet over high heat.' },
+                            { step: `Add ${protein} and stir-fry until browned.` },
+                            { step: 'Add ginger, garlic, and vegetables.' },
+                            { step: 'Stir-fry for 2-3 minutes until vegetables are crisp-tender.' },
+                            { step: 'Drizzle with sesame oil and serve with rice.' }
+                        ]
+                    }]
+                },
+                {
+                    title: `Mediterranean ${protein} Bowl`,
+                    image: 'https://images.unsplash.com/photo-1543353071-873f17a7a088?ixlib=rb-40.3&auto=format&fit=crop&w=800&q=80',
+                    nutrition: {
+                        nutrients: [
+                            { name: 'Calories', amount: parseInt(calories) * 0.88 },
+                            { name: 'Protein', amount: 35 },
+                            { name: 'Fat', amount: 20 },
+                            { name: 'Carbohydrates', amount: 40 },
+                            { name: 'Sugar', amount: 5 },
+                            { name: 'Fiber', amount: 8 }
+                        ]
+                    },
+                    extendedIngredients: [
+                        { original: `1 lb ${protein}, grilled` },
+                        { original: '1 cup quinoa, cooked' },
+                        { original: '1 cucumber, diced' },
+                        { original: '1/2 cup cherry tomatoes' },
+                        { original: '1/4 cup feta cheese' },
+                        { original: '2 tbsp olive oil' },
+                        { original: '1 lemon, juiced' },
+                        { original: 'Fresh herbs (oregano, mint)' }
+                    ],
+                    analyzedInstructions: [{
+                        steps: [
+                            { step: `Season and grill ${protein} until cooked through.` },
+                            { step: 'Cook quinoa according to package directions.' },
+                            { step: 'Chop vegetables and prepare the bowl.' },
+                            { step: 'Slice grilled protein and arrange on quinoa.' },
+                            { step: 'Add vegetables and feta cheese.' },
+                            { step: 'Drizzle with olive oil and lemon juice, garnish with herbs.' }
+                        ]
+                    }]
+                }
+            ];
+            
             // If user searches for pasta, provide popular pasta recipes
             if (searchTerm.includes('pasta') || searchTerm.includes('noodle')) {
                 const pastaRecipes = [
@@ -1701,8 +1855,8 @@
                         extendedIngredients: [
                             { original: `1 lb ${protein}, diced` },
                             { original: '12 oz fettuccine pasta' },
-                            { original: '1/2p basil pesto' },
-                            { original: '1/4p heavy cream' },
+                            { original: '1/2 cup basil pesto' },
+                            { original: '1/4 cup heavy cream' },
                             { original: '1/4 cup parmesan cheese' },
                             { original: '2 tbsp olive oil' },
                             { original: '3 cloves garlic, minced' },
@@ -1718,79 +1872,13 @@
                                 { step: 'Season with salt and pepper, serve immediately.' }
                             ]
                         }]
-                    },
-                    {
-                        title: `Vodka Sauce Pasta with ${protein}`,
-                        image: 'https://images.unsplash.com/photo-1563379926898-54575a45d8?ixlib=rb-40.3&auto=format&fit=crop&w=800&q=80',
-                        nutrition: {
-                            nutrients: [
-                                { name: 'Calories', amount: parseInt(calories) * 0.9 },
-                                { name: 'Protein', amount: 28 },
-                                { name: 'Fat', amount: 22 },
-                                { name: 'Carbohydrates', amount: 42 },
-                                { name: 'Sugar', amount: 8 },
-                                { name: 'Fiber', amount: 5 }
-                            ]
-                        },
-                        extendedIngredients: [
-                            { original: `1 lb ${protein}, sliced` },
-                            { original: '12z penne pasta' },
-                            { original: '1/2 cup heavy cream' },
-                            { original: '1/4 cup tomato paste' },
-                            { original: '1/4 cup parmesan cheese' },
-                            { original: '2 tbsp olive oil' },
-                            { original: '1 onion, diced' },
-                            { original: '3 cloves garlic, minced' },
-                            { original: 'Salt and pepper to taste' }
-                        ],
-                        analyzedInstructions: [{
-                            steps: [
-                                { step: 'Cook pasta in salted water until al dente, reserve1 cup pasta water.' },
-                                { step: `Heat olive oil in a large skillet and cook ${protein} until browned. Remove and set aside.` },
-                                { step: 'In the same skillet, sauté onion until translucent, add garlic.' },
-                                { step: 'Add tomato paste and cook for 1te, then add vodka and simmer.' },
-                                { step: 'Stir in cream and parmesan, add back the protein.' },
-                                { step: 'Tosswith pasta, adding pasta water if needed for creaminess.' }
-                            ]
-                        }]
-                    },
-                    {
-                        title: `Alfredo Pasta with ${protein}`,
-                        image: 'https://images.unsplash.com/photo-155118353bf91a1d81141xlib=rb-40.3&auto=format&fit=crop&w=800&q=80',
-                        nutrition: {
-                            nutrients: [
-                                { name: 'Calories', amount: parseInt(calories) * 0.95 },
-                                { name: 'Protein', amount: 30 },
-                                { name: 'Fat', amount: 25 },
-                                { name: 'Carbohydrates', amount: 38 },
-                                { name: 'Sugar', amount: 4 },
-                                { name: 'Fiber', amount: 3 }
-                            ]
-                        },
-                        extendedIngredients: [
-                            { original: `1 lb ${protein}, cubed` },
-                            { original: '12 oz fettuccine pasta' },
-                            { original: '1/2 cup butter' },
-                            { original: '1p heavy cream' },
-                            { original: '1 cup parmesan cheese' },
-                            { original: '3 cloves garlic, minced' },
-                            { original: '1/4 cup parsley, chopped' },
-                            { original: 'Salt and pepper to taste' }
-                        ],
-                        analyzedInstructions: [{
-                            steps: [
-                                { step: 'Cook pasta in salted water until al dente.' },
-                                { step: `Season ${protein} with salt and pepper, cook in a large skillet until golden.` },
-                                { step: 'Remove protein and set aside. In the same skillet, melt butter.' },
-                                { step: 'Add garlic and cook for 30 seconds, then add cream.' },
-                                { step: 'Simmer until slightly thickened, stir in parmesan cheese.' },
-                                { step: 'Add back protein and pasta, toss to coat. Garnish with parsley.' }
-                            ]
-                        }]
                     }
                 ];
                 demoRecipes.push(...pastaRecipes);
             }
+            
+            // Add global cuisine recipes
+            demoRecipes.push(...globalRecipes);
             
             // Add a general recipe based on the protein
             demoRecipes.push({
