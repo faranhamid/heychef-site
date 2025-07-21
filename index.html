@@ -560,6 +560,7 @@
                         </div>
                                                         ${subscribed ? `<div class="dropdown-item" onclick="showUnsubscribeModal()"><i class="fas fa-times-circle"></i><span>Unsubscribe</span></div>` : `<div class="dropdown-item" onclick="showUpgradePrompt()"><i class="fas fa-crown"></i><span>Upgrade to Premium</span></div>`}
                         <div class="dropdown-item" onclick="forcePremiumAccess()"><i class="fas fa-crown"></i><span>Force Premium Access</span></div>
+                        <div class="dropdown-item" onclick="testWhopIntegration()"><i class="fas fa-vial"></i><span>Test Whop Integration</span></div>
                         <div class="dropdown-divider"></div>
                         <div class="dropdown-item" onclick="signOutUser()">
                             <i class="fas fa-sign-out-alt"></i>
@@ -2497,6 +2498,82 @@
                     window.location.href = stripeUrl;
                 }
             }
+        };
+
+        // Test Whop integration
+        window.testWhopIntegration = function() {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('Please sign in first to test Whop integration.');
+                return;
+            }
+            
+            console.log('🧪 Testing Whop Integration...');
+            console.log('User:', user.email);
+            
+            // Test URLs
+            const monthlyUrl = `https://whop.com/checkout/plan_QAyjF6Q2hnSOe?d2c=true&email=${encodeURIComponent(user.email)}&success_url=${encodeURIComponent('https://heychef.menu?payment=success&from_whop=true')}&cancel_url=${encodeURIComponent('https://heychef.menu?payment=cancelled&from_whop=true')}`;
+            const annualUrl = `https://whop.com/checkout/plan_nbdGYrSmUo2GH?d2c=true&email=${encodeURIComponent(user.email)}&success_url=${encodeURIComponent('https://heychef.menu?payment=success&from_whop=true')}&cancel_url=${encodeURIComponent('https://heychef.menu?payment=cancelled&from_whop=true')}`;
+            
+            console.log('📋 Monthly Plan URL:', monthlyUrl);
+            console.log('📋 Annual Plan URL:', annualUrl);
+            
+            // Show test modal
+            const modalText = document.getElementById('modal-text');
+            modalText.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <h2 style="color: var(--primary); margin-bottom: 1rem;">🧪 Whop Integration Test</h2>
+                    <div style="text-align: left; max-width: 600px; margin: 0 auto;">
+                        <p><strong>User Email:</strong> ${user.email}</p>
+                        <p><strong>Monthly Plan ID:</strong> plan_QAyjF6Q2hnSOe</p>
+                        <p><strong>Annual Plan ID:</strong> plan_nbdGYrSmUo2GH</p>
+                        <p><strong>Success URL:</strong> https://heychef.menu?payment=success&from_whop=true</p>
+                        <p><strong>Cancel URL:</strong> https://heychef.menu?payment=cancelled&from_whop=true</p>
+                        
+                        <div style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 1rem; margin: 1rem 0;">
+                            <p style="color: #0369a1; margin: 0;"><strong>Test Instructions:</strong></p>
+                            <ol style="text-align: left; margin: 1rem 0 0 0; padding-left: 1.5rem;">
+                                <li>Click "Test Monthly Plan" to open Whop checkout</li>
+                                <li>Complete or cancel the payment</li>
+                                <li>Check if you're redirected back to HeyChef!</li>
+                                <li>Verify premium access is granted</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+                        <button class="cta-button" onclick="testWhopPlan('monthly')" style="background: var(--accent);">Test Monthly Plan</button>
+                        <button class="cta-button" onclick="testWhopPlan('annual')" style="background: var(--accent);">Test Annual Plan</button>
+                        <button class="cta-button" onclick="closeModal()" style="background: #6b7280;">Close</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal').style.display = 'flex';
+        };
+        
+        window.testWhopPlan = function(plan) {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('Please sign in first.');
+                return;
+            }
+            
+            const successUrl = encodeURIComponent('https://heychef.menu?payment=success&from_whop=true');
+            const cancelUrl = encodeURIComponent('https://heychef.menu?payment=cancelled&from_whop=true');
+            
+            let whopUrl = '';
+            if (plan === 'monthly') {
+                whopUrl = `https://whop.com/checkout/plan_QAyjF6Q2hnSOe?d2c=true&email=${encodeURIComponent(user.email)}&success_url=${successUrl}&cancel_url=${cancelUrl}`;
+            } else {
+                whopUrl = `https://whop.com/checkout/plan_nbdGYrSmUo2GH?d2c=true&email=${encodeURIComponent(user.email)}&success_url=${successUrl}&cancel_url=${cancelUrl}`;
+            }
+            
+            console.log(`🧪 Testing ${plan} plan:`, whopUrl);
+            
+            // Open in new tab for testing
+            window.open(whopUrl, '_blank');
+            
+            // Show instructions
+            alert(`🧪 Whop ${plan} plan test opened in new tab.\n\nPlease complete or cancel the payment and check if you're redirected back to HeyChef! with premium access.`);
         };
     </script>
     <style>
