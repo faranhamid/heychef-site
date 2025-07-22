@@ -1626,12 +1626,31 @@
                     'caribbean', 'jamaican', 'haitian', 'dominican', 'puerto rican', 'cuban'
                 ];
                 
-                // Add common pasta types if user mentions pasta
+                // Enhanced pasta search with multiple variations
                 if (searchQuery.includes('pasta') || searchQuery.includes('noodle')) {
-                    // Add popular pasta sauce types to the search
-                    const pastaSauces = ['pesto', 'vodka', 'alfredo', 'marinara', 'carbonara', 'bolognese', 'aglio e olio'];
+                    // Comprehensive pasta types and sauces
+                    const pastaTypes = ['spaghetti', 'penne', 'fettuccine', 'linguine', 'rigatoni', 'fusilli', 'rotini', 'farfalle', 'orecchiette', 'cavatappi', 'gemelli', 'campanelle', 'radiatori', 'conchiglie', 'tortellini', 'ravioli', 'lasagna', 'ziti', 'rigatoni', 'pappardelle'];
+                    const pastaSauces = ['pesto', 'vodka', 'alfredo', 'marinara', 'carbonara', 'bolognese', 'aglio e olio', 'puttanesca', 'amatriciana', 'arrabbiata', 'cacio e pepe', 'pomodoro', 'creamy', 'garlic butter', 'lemon cream', 'mushroom cream', 'tomato basil', 'olive oil', 'white wine', 'cream sauce'];
+                    const pastaStyles = ['italian', 'mediterranean', 'traditional', 'authentic', 'homemade', 'classic', 'gourmet', 'restaurant style', 'fresh', 'handmade'];
+                    
+                    // Create multiple pasta search variations
+                    const randomType = pastaTypes[Math.floor(Math.random() * pastaTypes.length)];
                     const randomSauce = pastaSauces[Math.floor(Math.random() * pastaSauces.length)];
-                    searchQuery = `${searchQuery} ${randomSauce}`;
+                    const randomStyle = pastaStyles[Math.floor(Math.random() * pastaStyles.length)];
+                    
+                    // Generate multiple pasta search queries
+                    searchQueries = [
+                        `${randomType} ${randomSauce}`, // Specific pasta type with sauce
+                        `${randomSauce} pasta`, // Sauce with pasta
+                        `${randomStyle} pasta`, // Style with pasta
+                        `${randomType} pasta`, // Specific pasta type
+                        `pasta ${randomSauce}`, // Pasta with sauce
+                        `${randomType} ${randomStyle}`, // Type with style
+                        `${randomSauce} ${randomType}`, // Sauce with type
+                        `italian ${randomType}`, // Italian with type
+                        `${randomType} recipe`, // Type with recipe
+                        `pasta ${randomStyle}` // Pasta with style
+                    ];
                 }
                 
                 // Add Salvadoran cuisine keywords if user mentions pupusas
@@ -1644,17 +1663,19 @@
                 const randomMethod = cookingMethods[Math.floor(Math.random() * cookingMethods.length)];
                 const randomCuisine = globalCuisines[Math.floor(Math.random() * globalCuisines.length)];
                 
-                // Try multiple search strategies with global cuisine focus
-                const searchQueries = [
-                    searchQuery, // Original query
-                    `${randomMethod} ${searchQuery}`, // With cooking method
-                    `${searchQuery} ${randomCuisine}`, // With random global cuisine
-                    `${searchQuery} recipe`, // With "recipe" keyword
-                    `${searchQuery} dish`, // With "dish" keyword
-                    `${randomCuisine} ${searchQuery}`, // Cuisine first
-                    `${searchQuery} traditional`, // Traditional preparation
-                    `${searchQuery} authentic` // Authentic preparation
-                ];
+                // Initialize searchQueries array if not already set by pasta logic
+                if (!searchQueries) {
+                    searchQueries = [
+                        searchQuery, // Original query
+                        `${randomMethod} ${searchQuery}`, // With cooking method
+                        `${searchQuery} ${randomCuisine}`, // With random global cuisine
+                        `${searchQuery} recipe`, // With "recipe" keyword
+                        `${searchQuery} dish`, // With "dish" keyword
+                        `${randomCuisine} ${searchQuery}`, // Cuisine first
+                        `${searchQuery} traditional`, // Traditional preparation
+                        `${searchQuery} authentic` // Authentic preparation
+                    ];
+                }
                 
                 // Use the first query initially, but we can fall back to others if needed
                 const specificQuery = searchQueries[0];
@@ -1685,11 +1706,14 @@
                 if (recipes.length === 0 && searchQueries.length > 1) {
                     console.log('🔍 No results with first query, trying alternatives...');
                     
-                    for (let i = 1; i < searchQueries.length; i++) {
+                    // Try multiple alternative queries to get more results
+                    let allRecipes = [];
+                    
+                    for (let i = 1; i < Math.min(searchQueries.length, 5); i++) { // Try up to 5 alternative queries
                         const alternativeQuery = searchQueries[i];
                         console.log(`🔍 Trying alternative query ${i}: ${alternativeQuery}`);
                         
-                        const alternativeUrl = `https://api.spoonacular.com/recipes/complexSearch?apiKey=${apiKey}&maxCalories=${calories}&number=25&addRecipeInformation=true&addRecipeNutrition=true&instructionsRequired=true&fillIngredients=true&query=${encodeURIComponent(alternativeQuery)}&sort=relevance`;
+                        const alternativeUrl = `https://api.spoonacular.com/recipes/complexSearch?apiKey=${apiKey}&maxCalories=${calories}&number=10&addRecipeInformation=true&addRecipeNutrition=true&instructionsRequired=true&fillIngredients=true&query=${encodeURIComponent(alternativeQuery)}&sort=relevance`;
                         
                         try {
                             const altResponse = await fetch(alternativeUrl);
@@ -1697,14 +1721,23 @@
                                 const altData = await altResponse.json();
                                 if (altData.results && altData.results.length > 0) {
                                     console.log(`✅ Found ${altData.results.length} recipes with alternative query: ${alternativeQuery}`);
-                                    recipes = altData.results;
-                                    currentIndex = 0;
-                                    break;
+                                    // Add unique recipes to the collection
+                                    altData.results.forEach(recipe => {
+                                        if (!allRecipes.find(r => r.id === recipe.id)) {
+                                            allRecipes.push(recipe);
+                                        }
+                                    });
                                 }
                             }
                         } catch (altError) {
                             console.log(`❌ Alternative query ${i} failed:`, altError);
                         }
+                    }
+                    
+                    if (allRecipes.length > 0) {
+                        console.log(`✅ Total unique recipes found: ${allRecipes.length}`);
+                        recipes = allRecipes;
+                        currentIndex = 0;
                     }
                 }
                 
@@ -1771,6 +1804,173 @@
         function generateDemoRecipes(calories, protein) {
             const searchTerm = protein.toLowerCase();
             const demoRecipes = [];
+            
+            // Pasta-specific demo recipes
+            if (searchTerm.includes('pasta') || searchTerm.includes('noodle')) {
+                const pastaRecipes = [
+                    {
+                        title: 'Creamy Garlic Parmesan Pasta',
+                        image: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                        nutrition: {
+                            nutrients: [
+                                { name: 'Calories', amount: parseInt(calories) * 0.85 },
+                                { name: 'Protein', amount: 18 },
+                                { name: 'Fat', amount: 22 },
+                                { name: 'Carbohydrates', amount: 65 },
+                                { name: 'Sugar', amount: 4 },
+                                { name: 'Fiber', amount: 3 }
+                            ]
+                        },
+                        extendedIngredients: [
+                            { original: '1 lb fettuccine pasta' },
+                            { original: '4 tbsp butter' },
+                            { original: '4 cloves garlic, minced' },
+                            { original: '1 cup heavy cream' },
+                            { original: '1 cup parmesan cheese, grated' },
+                            { original: '1/4 cup fresh parsley, chopped' },
+                            { original: 'Salt and pepper to taste' }
+                        ],
+                        analyzedInstructions: [{
+                            steps: [
+                                { step: 'Cook pasta according to package directions until al dente.' },
+                                { step: 'In a large skillet, melt butter over medium heat.' },
+                                { step: 'Add garlic and cook for 1 minute until fragrant.' },
+                                { step: 'Pour in heavy cream and bring to a simmer.' },
+                                { step: 'Add parmesan cheese and stir until melted and smooth.' },
+                                { step: 'Toss cooked pasta with sauce and garnish with parsley.' }
+                            ]
+                        }]
+                    },
+                    {
+                        title: 'Spicy Arrabbiata Pasta',
+                        image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                        nutrition: {
+                            nutrients: [
+                                { name: 'Calories', amount: parseInt(calories) * 0.8 },
+                                { name: 'Protein', amount: 12 },
+                                { name: 'Fat', amount: 8 },
+                                { name: 'Carbohydrates', amount: 70 },
+                                { name: 'Sugar', amount: 8 },
+                                { name: 'Fiber', amount: 6 }
+                            ]
+                        },
+                        extendedIngredients: [
+                            { original: '1 lb penne pasta' },
+                            { original: '3 tbsp olive oil' },
+                            { original: '4 cloves garlic, minced' },
+                            { original: '1/2 tsp red pepper flakes' },
+                            { original: '1 can (28 oz) crushed tomatoes' },
+                            { original: '1/4 cup fresh basil, chopped' },
+                            { original: 'Salt and pepper to taste' }
+                        ],
+                        analyzedInstructions: [{
+                            steps: [
+                                { step: 'Cook penne pasta until al dente.' },
+                                { step: 'Heat olive oil in a large skillet over medium heat.' },
+                                { step: 'Add garlic and red pepper flakes, cook for 1 minute.' },
+                                { step: 'Pour in crushed tomatoes and simmer for 15 minutes.' },
+                                { step: 'Toss pasta with sauce and garnish with fresh basil.' }
+                            ]
+                        }]
+                    },
+                    {
+                        title: 'Pesto Linguine with Pine Nuts',
+                        image: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                        nutrition: {
+                            nutrients: [
+                                { name: 'Calories', amount: parseInt(calories) * 0.9 },
+                                { name: 'Protein', amount: 15 },
+                                { name: 'Fat', amount: 28 },
+                                { name: 'Carbohydrates', amount: 58 },
+                                { name: 'Sugar', amount: 3 },
+                                { name: 'Fiber', amount: 4 }
+                            ]
+                        },
+                        extendedIngredients: [
+                            { original: '1 lb linguine pasta' },
+                            { original: '1 cup fresh basil leaves' },
+                            { original: '1/4 cup pine nuts' },
+                            { original: '1/2 cup olive oil' },
+                            { original: '1/2 cup parmesan cheese' },
+                            { original: '2 cloves garlic' },
+                            { original: 'Salt and pepper to taste' }
+                        ],
+                        analyzedInstructions: [{
+                            steps: [
+                                { step: 'Cook linguine until al dente.' },
+                                { step: 'In a food processor, combine basil, pine nuts, garlic, and parmesan.' },
+                                { step: 'With motor running, slowly add olive oil until smooth.' },
+                                { step: 'Toss hot pasta with pesto sauce and serve immediately.' }
+                            ]
+                        }]
+                    },
+                    {
+                        title: 'Carbonara with Pancetta',
+                        image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                        nutrition: {
+                            nutrients: [
+                                { name: 'Calories', amount: parseInt(calories) * 0.95 },
+                                { name: 'Protein', amount: 25 },
+                                { name: 'Fat', amount: 32 },
+                                { name: 'Carbohydrates', amount: 55 },
+                                { name: 'Sugar', amount: 2 },
+                                { name: 'Fiber', amount: 2 }
+                            ]
+                        },
+                        extendedIngredients: [
+                            { original: '1 lb spaghetti pasta' },
+                            { original: '4 oz pancetta, diced' },
+                            { original: '4 large eggs' },
+                            { original: '1 cup parmesan cheese, grated' },
+                            { original: '4 cloves garlic, minced' },
+                            { original: 'Black pepper to taste' }
+                        ],
+                        analyzedInstructions: [{
+                            steps: [
+                                { step: 'Cook spaghetti until al dente.' },
+                                { step: 'In a skillet, cook pancetta until crispy.' },
+                                { step: 'Whisk eggs and parmesan in a bowl.' },
+                                { step: 'Toss hot pasta with egg mixture and pancetta.' },
+                                { step: 'The heat from pasta will cook the eggs into a creamy sauce.' }
+                            ]
+                        }]
+                    },
+                    {
+                        title: 'Lemon Butter Shrimp Pasta',
+                        image: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                        nutrition: {
+                            nutrients: [
+                                { name: 'Calories', amount: parseInt(calories) * 0.85 },
+                                { name: 'Protein', amount: 22 },
+                                { name: 'Fat', amount: 18 },
+                                { name: 'Carbohydrates', amount: 60 },
+                                { name: 'Sugar', amount: 3 },
+                                { name: 'Fiber', amount: 3 }
+                            ]
+                        },
+                        extendedIngredients: [
+                            { original: '1 lb fettuccine pasta' },
+                            { original: '1 lb shrimp, peeled and deveined' },
+                            { original: '4 tbsp butter' },
+                            { original: '2 lemons, zested and juiced' },
+                            { original: '4 cloves garlic, minced' },
+                            { original: '1/4 cup fresh parsley, chopped' },
+                            { original: 'Salt and pepper to taste' }
+                        ],
+                        analyzedInstructions: [{
+                            steps: [
+                                { step: 'Cook fettuccine until al dente.' },
+                                { step: 'In a large skillet, melt butter over medium heat.' },
+                                { step: 'Add shrimp and cook for 2-3 minutes until pink.' },
+                                { step: 'Add garlic, lemon zest, and juice.' },
+                                { step: 'Toss with pasta and garnish with parsley.' }
+                            ]
+                        }]
+                    }
+                ];
+                
+                return pastaRecipes;
+            }
             
             // Global cuisine recipes based on the search term
             const globalRecipes = [
