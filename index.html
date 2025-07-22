@@ -95,7 +95,7 @@
         </div>
     </section>
 
-    <section id="video-demo" class="video-section">
+    <section id="video-demo" class="video-section" style="display: none;">
         <div class="container">
             <img src="images/logo.png" alt="HeyChef! Logo" class="section-logo">
             <h2 class="section-title">See HeyChef! in Action</h2>
@@ -1112,6 +1112,7 @@
                 const testimonialsSection = document.getElementById('testimonials');
                 const affiliateSection = document.getElementById('affiliate');
                 const faqSection = document.getElementById('faq');
+                const videoSection = document.getElementById('video-demo');
 
                 if (user) {
                     console.log('🔍 AUTH STATE CHANGE - User logged in:', user.email);
@@ -1160,6 +1161,8 @@
                         console.log('✅ User has active subscription - showing recipe generator');
                         showRecipeGenerator();
                         showWelcomeMessage(user.email);
+                        // Hide video section when user is signed in
+                        if (videoSection) videoSection.style.display = 'none';
                         // Clear any old payment flags
                         sessionStorage.removeItem('paymentSuccess');
                         sessionStorage.removeItem('paymentTimestamp');
@@ -1176,6 +1179,8 @@
                         testimonialsSection.style.display = 'none';
                         affiliateSection.style.display = 'none';
                         faqSection.style.display = 'none';
+                        // Hide video section when user is signed in (even without subscription)
+                        if (videoSection) videoSection.style.display = 'none';
                         showLockedGenerator();
                     }
                 } else {
@@ -1204,6 +1209,8 @@
                     testimonialsSection.style.display = 'block';
                     affiliateSection.style.display = 'block';
                     faqSection.style.display = 'block';
+                    // Show video section when user is not signed in
+                    if (videoSection) videoSection.style.display = 'block';
                 }
             } catch (error) {
                 console.error('❌ Error in auth state change:', error);
