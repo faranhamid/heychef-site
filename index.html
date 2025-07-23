@@ -256,6 +256,84 @@
         </div>
     </section>
 
+    <section id="weight-loss-testimonials" class="weight-loss-testimonials-section">
+        <div class="container">
+            <img src="images/logo.png" alt="HeyChef! Logo" class="section-logo">
+            <h2 class="section-title">Weight Loss Success Stories</h2>
+            <p class="section-intro">Discover how HeyChef! helped users achieve their health goals with personalized, nutritious recipes.</p>
+            <div class="weight-loss-testimonials-grid">
+                <div class="weight-loss-testimonial-card">
+                    <div class="before-after-container">
+                        <div class="before-after-images">
+                            <div class="before-image">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Before weight loss" loading="lazy">
+                                <span class="weight-label before">85 kg</span>
+                            </div>
+                            <div class="arrow-container">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                            <div class="after-image">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="After weight loss" loading="lazy">
+                                <span class="weight-label after">68 kg</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-content">
+                        <p class="testimonial-text">"HeyChef! taught me how to cook healthy meals that actually taste amazing! I lost <strong>17 kg in 4 months</strong> while never feeling deprived. The AI suggestions are perfect for my busy lifestyle."</p>
+                        <h4 class="testimonial-author">- Alex M., 28 y.o.</h4>
+                        <p class="testimonial-disclaimer">Results are not typical. Individual results may vary.</p>
+                    </div>
+                </div>
+
+                <div class="weight-loss-testimonial-card">
+                    <div class="before-after-container">
+                        <div class="before-after-images">
+                            <div class="before-image">
+                                <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Before weight loss" loading="lazy">
+                                <span class="weight-label before">72 kg</span>
+                            </div>
+                            <div class="arrow-container">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                            <div class="after-image">
+                                <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="After weight loss" loading="lazy">
+                                <span class="weight-label after">58 kg</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-content">
+                        <p class="testimonial-text">"After struggling with yo-yo dieting for years, HeyChef! finally gave me sustainable, delicious recipes. I've lost <strong>14 kg in 6 months</strong> and feel more energetic than ever!"</p>
+                        <h4 class="testimonial-author">- Jessica L., 34 y.o.</h4>
+                        <p class="testimonial-disclaimer">Results are not typical. Individual results may vary.</p>
+                    </div>
+                </div>
+
+                <div class="weight-loss-testimonial-card">
+                    <div class="before-after-container">
+                        <div class="before-after-images">
+                            <div class="before-image">
+                                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Before weight loss" loading="lazy">
+                                <span class="weight-label before">95 kg</span>
+                            </div>
+                            <div class="arrow-container">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                            <div class="after-image">
+                                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="After weight loss" loading="lazy">
+                                <span class="weight-label after">78 kg</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-content">
+                        <p class="testimonial-text">"HeyChef! made healthy eating enjoyable! The personalized recipes helped me lose <strong>17 kg in 5 months</strong>. I never thought I could enjoy cooking this much while losing weight."</p>
+                        <h4 class="testimonial-author">- David K., 31 y.o.</h4>
+                        <p class="testimonial-disclaimer">Results are not typical. Individual results may vary.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section id="affiliate" class="affiliate-section">
         <div class="container">
             <img src="images/logo.png" alt="HeyChef! Logo" class="section-logo">
@@ -1169,6 +1247,8 @@
                         howItWorksSection.style.display = 'none';
                         subscriptionSection.style.display = 'none';
                         testimonialsSection.style.display = 'none';
+                        const weightLossTestimonialsSection = document.getElementById('weight-loss-testimonials');
+                        if (weightLossTestimonialsSection) weightLossTestimonialsSection.style.display = 'none';
                         affiliateSection.style.display = 'none';
                         faqSection.style.display = 'none';
                         // Hide video section when user is signed in (even without subscription)
@@ -1199,6 +1279,8 @@
                     howItWorksSection.style.display = 'block';
                     subscriptionSection.style.display = 'block';
                     testimonialsSection.style.display = 'block';
+                    const weightLossTestimonialsSection = document.getElementById('weight-loss-testimonials');
+                    if (weightLossTestimonialsSection) weightLossTestimonialsSection.style.display = 'block';
                     affiliateSection.style.display = 'block';
                     faqSection.style.display = 'block';
                     // Show video section when user is not signed in
@@ -1302,6 +1384,8 @@
             howItWorksSection.style.display = 'block';
             subscriptionSection.style.display = 'block';
             testimonialsSection.style.display = 'block';
+            const weightLossTestimonialsSection = document.getElementById('weight-loss-testimonials');
+            if (weightLossTestimonialsSection) weightLossTestimonialsSection.style.display = 'block';
             affiliateSection.style.display = 'block';
             faqSection.style.display = 'block';
         };
@@ -1328,6 +1412,8 @@
             howItWorksSection.style.display = 'none';
             subscriptionSection.style.display = 'none';
             testimonialsSection.style.display = 'none';
+            const weightLossTestimonialsSection = document.getElementById('weight-loss-testimonials');
+            if (weightLossTestimonialsSection) weightLossTestimonialsSection.style.display = 'none';
             affiliateSection.style.display = 'none';
             faqSection.style.display = 'none';
         };
