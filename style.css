@@ -814,74 +814,53 @@ body::before {
     box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
 }
 
-.before-after-container {
+.testimonial-image-container {
+    position: relative;
     background: linear-gradient(135deg, #667eea, #764ba2);
     padding: 2rem;
     text-align: center;
+    overflow: hidden;
 }
 
-.before-after-images {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-.before-image, .after-image {
-    position: relative;
-    flex: 1;
-    max-width: 120px;
-}
-
-.before-image img, .after-image img {
+.testimonial-image-container img {
     width: 100%;
-    height: 120px;
+    height: 400px;
     object-fit: cover;
-    border-radius: 50%;
+    border-radius: 15px;
     border: 4px solid var(--white);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease;
 }
 
-.weight-label {
+.testimonial-image-container:hover img {
+    transform: scale(1.02);
+}
+
+.weight-loss-badge {
     position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--white);
-    color: var(--text);
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    top: 2rem;
+    right: 2rem;
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    color: var(--white);
+    padding: 1rem 1.5rem;
+    border-radius: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    backdrop-filter: blur(10px);
 }
 
-.weight-label.before {
-    background: #fecaca;
-    color: #dc2626;
+.weight-loss-amount {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
 }
 
-.weight-label.after {
-    background: #bbf7d0;
-    color: #16a34a;
-}
-
-.arrow-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    background: var(--white);
-    border-radius: 50%;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.arrow-container i {
-    color: #667eea;
-    font-size: 1.2rem;
-    font-weight: bold;
+.weight-loss-time {
+    display: block;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    font-weight: 500;
 }
 
 .testimonial-content {
@@ -922,25 +901,26 @@ body::before {
         gap: 2rem;
     }
     
-    .before-after-images {
-        gap: 1rem;
+    .testimonial-image-container {
+        padding: 1.5rem;
     }
     
-    .before-image, .after-image {
-        max-width: 100px;
+    .testimonial-image-container img {
+        height: 300px;
     }
     
-    .before-image img, .after-image img {
-        height: 100px;
+    .weight-loss-badge {
+        top: 1.5rem;
+        right: 1.5rem;
+        padding: 0.75rem 1rem;
     }
     
-    .arrow-container {
-        width: 35px;
-        height: 35px;
+    .weight-loss-amount {
+        font-size: 1.25rem;
     }
     
-    .arrow-container i {
-        font-size: 1rem;
+    .weight-loss-time {
+        font-size: 0.8rem;
     }
     
     .testimonial-content {
